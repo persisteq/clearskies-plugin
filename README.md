@@ -1,4 +1,4 @@
-# clearskies-skills
+# clearskies-plugin
 
 Skills for building and shipping automations on the clearskies
 workflow-builder MCP. Each skill lives under `skills/<name>/` with a `SKILL.md` and any
