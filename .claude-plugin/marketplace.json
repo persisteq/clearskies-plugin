@@ -1,0 +1,18 @@
+{
+  "name": "clearskies-marketplace",
+  "owner": {
+    "name": "clearskies"
+  },
+  "metadata": {
+    "description": "clearskies skills for building and shipping workflow-builder automations."
+  },
+  "plugins": [
+    {
+      "name": "clearskies",
+      "source": "./",
+      "description": "Author, validate, and safely publish clearskies workflows and agents, plus the RevOps recipe for putting a Salesforce field under AI maintenance.",
+      "category": "productivity",
+      "keywords": ["clearskies", "workflow", "revops", "salesforce", "automation"]
+    }
+  ]
+}

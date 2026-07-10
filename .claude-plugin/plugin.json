@@ -1,5 +1,11 @@
 {
   "name": "clearskies",
+  "displayName": "clearskies",
   "version": "0.1.0",
-  "description": "Skills for building and shipping automations on the clearskies workflow-builder MCP — authoring, validating, and safely publishing workflows and agents, plus the RevOps recipe for putting a Salesforce field under AI maintenance."
+  "description": "Skills for building and shipping automations on the clearskies workflow-builder MCP — authoring, validating, and safely publishing workflows and agents, plus the RevOps recipe for putting a Salesforce field under AI maintenance.",
+  "author": {
+    "name": "clearskies"
+  },
+  "homepage": "https://app.clearskies.cc",
+  "keywords": ["clearskies", "workflow", "revops", "salesforce", "automation", "mcp"]
 }
