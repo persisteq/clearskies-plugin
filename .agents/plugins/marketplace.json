@@ -1,0 +1,20 @@
+{
+  "name": "clearskies-marketplace",
+  "interface": {
+    "displayName": "clearskies"
+  },
+  "plugins": [
+    {
+      "name": "clearskies",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
