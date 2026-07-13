@@ -1,10 +1,10 @@
 # clearskies-plugin
 
-Skills for building and shipping automations on the clearskies
-workflow-builder MCP. Each skill lives under `skills/<name>/` with a `SKILL.md` and any
-`references/` it needs. The repo is both a plugin (`.claude-plugin/plugin.json`) and its
-own marketplace (`.claude-plugin/marketplace.json`), so it installs through the standard
-Claude Code plugin flow.
+Skills for building and shipping automations on the clearskies workflow-builder MCP —
+usable from both **Claude Code** and **ChatGPT (Codex)**. Each skill lives under
+`skills/<name>/` with a `SKILL.md` and any `references/` it needs. The repo ships a plugin
+manifest for each host — `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json` — and
+is also its own Claude Code marketplace (`.claude-plugin/marketplace.json`).
 
 ## Skills
 
@@ -20,6 +20,8 @@ Claude Code plugin flow.
 
 ## Installing
 
+### Claude Code
+
 Add this repo as a marketplace, then install the plugin:
 
 ```
@@ -29,9 +31,11 @@ Add this repo as a marketplace, then install the plugin:
 
 The plugin bundles both skills. Skills are namespaced, e.g. `/clearskies:clearskies-workflow-builder`.
 
-> This repo is currently **private** (internal testing). Until it's made public, you need
-> read access to it, and background auto-updates require a `GITHUB_TOKEN` with repo read
-> scope in your environment.
+### ChatGPT (Codex)
+
+The repo also ships a `.codex-plugin/plugin.json` manifest (plus brand assets under
+`assets/`) that describes the plugin for ChatGPT (Codex), so the same two skills are
+available there.
 
 Every skill proposes or drafts workflows first and never publishes or edits a live
 workflow without explicit approval.
