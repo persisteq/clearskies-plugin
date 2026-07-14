@@ -1,18 +1,28 @@
 {
   "name": "clearskies",
-  "version": "0.1.6",
-  "description": "Skills for building and shipping automations on the clearskies workflow-builder MCP — authoring, validating, and safely publishing workflows and agents, plus the RevOps recipe for putting a Salesforce field under AI maintenance.",
+  "version": "0.1.7",
+  "description": "Connect to Clearskies CRM, meeting, call transcript, and email data; discover tenant-specific schemas; and safely build revenue workflows.",
   "author": {
     "name": "clearskies"
   },
+  "homepage": "https://app.clearskies.cc",
+  "repository": "https://github.com/persisteq/clearskies-plugin",
+  "keywords": ["clearskies", "crm", "calls", "email", "revops", "workflow", "automation", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "clearskies",
-    "shortDescription": "Build and safely publish clearskies workflows.",
-    "longDescription": "Author, validate, test, and publish clearskies workflows and agents.",
+    "shortDescription": "Use Clearskies revenue data and workflows.",
+    "longDescription": "Research CRM records, calls, transcripts, and email; learn each tenant's synced schema; and author or publish Clearskies workflows.",
     "developerName": "clearskies",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],
     "websiteURL": "https://app.clearskies.cc",
+    "defaultPrompt": [
+      "Set up Clearskies for this tenant.",
+      "Research this account using CRM, calls, and email.",
+      "Help me build a Clearskies workflow."
+    ],
     "brandColor": "#0A0A0A",
     "composerIcon": "./assets/icon.png",
     "logo": "./assets/logo.png",
