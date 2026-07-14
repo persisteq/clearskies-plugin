@@ -2,7 +2,7 @@
   "name": "clearskies",
   "displayName": "clearskies",
   "version": "0.1.7",
-  "description": "Connect to Clearskies CRM, meeting, call transcript, and email data; discover tenant-specific schemas; and safely build revenue workflows.",
+  "description": "Connect to clearskies CRM, meeting, call transcript, and email data; discover tenant-specific schemas; and safely build revenue workflows.",
   "author": {
     "name": "clearskies"
   },

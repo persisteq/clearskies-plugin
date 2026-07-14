@@ -1,13 +1,13 @@
 interface:
-  display_name: "Set Up Clearskies"
+  display_name: "Set Up clearskies"
   short_description: "Discover and refresh synced CRM context"
-  default_prompt: "Use $setup-clearskies to discover or refresh my synced Clearskies CRM schema."
+  default_prompt: "Use $setup-clearskies to discover or refresh my synced clearskies CRM schema."
 
 dependencies:
   tools:
     - type: "mcp"
       value: "clearskies"
-      description: "Clearskies tenant CRM schema discovery"
+      description: "clearskies tenant CRM schema discovery"
       transport: "streamable_http"
       url: "https://mcp.clearskies.cc/mcp"
 

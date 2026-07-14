@@ -22,6 +22,13 @@ runtime — writing to the wrong record, resolving a variable to empty string, o
 finding nothing. This skill encodes the order of operations and the specific traps
 so a workflow you ship actually does what the user asked.
 
+## Load tenant context
+
+Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and
+`~/.clearskies/tenant-profile.md` when present. Continue with this skill's bundled
+guidance when they are absent. Treat the profile as schema-routing metadata, not
+current CRM record values.
+
 ## The golden rule
 
 **`workflow_validate` confirms the graph is well-formed and that its references

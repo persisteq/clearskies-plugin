@@ -1,13 +1,13 @@
 interface:
-  display_name: "Use Clearskies Revenue Data"
+  display_name: "Use clearskies Revenue Data"
   short_description: "Query CRM, calls, and email data safely"
-  default_prompt: "Use $use-clearskies-revenue-data to answer this revenue question from Clearskies data."
+  default_prompt: "Use $use-clearskies-revenue-data to answer this revenue question from clearskies data."
 
 dependencies:
   tools:
     - type: "mcp"
       value: "clearskies"
-      description: "Clearskies CRM and revenue-interaction data"
+      description: "clearskies CRM and revenue-interaction data"
       transport: "streamable_http"
       url: "https://mcp.clearskies.cc/mcp"
 

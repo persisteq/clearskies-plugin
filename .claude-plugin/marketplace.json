@@ -4,13 +4,13 @@
     "name": "clearskies"
   },
   "metadata": {
-    "description": "Use Clearskies CRM and revenue-interaction data, discover tenant schemas, and build workflow automations."
+    "description": "Use clearskies CRM and revenue-interaction data, discover tenant schemas, and build workflow automations."
   },
   "plugins": [
     {
       "name": "clearskies",
       "source": "./",
-      "description": "Research synced CRM, calls, transcripts, and email; set up tenant context; and safely publish Clearskies workflows.",
+      "description": "Research synced CRM, calls, transcripts, and email; set up tenant context; and safely publish clearskies workflows.",
       "category": "productivity",
       "keywords": ["clearskies", "crm", "calls", "email", "workflow", "revops", "automation"]
     }

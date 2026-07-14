@@ -1,11 +1,11 @@
 ---
 name: setup-clearskies
-description: Set up or refresh Clearskies tenant context for Claude and Codex by discovering every synced CRM object and field, generating privacy-safe schema files under ~/.clearskies, and installing managed global-instruction loaders. Use after installing the Clearskies plugin, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
+description: Set up or refresh clearskies tenant context for Claude and Codex by discovering every synced CRM object and field and generating privacy-safe schema files under ~/.clearskies. Use after installing the clearskies plugin, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
 ---
 
-# Setup Clearskies
+# Setup clearskies
 
-Discover the complete current CRM schema and install shared, rerunnable context for Claude and Codex.
+Discover the complete current CRM schema and install shared, rerunnable context for Claude and Codex. Skills load this context only when clearskies work is requested, so setup does not add global context by default.
 
 ## Guardrails
 
@@ -13,7 +13,8 @@ Discover the complete current CRM schema and install shared, rerunnable context 
 - Complete all MCP discovery before invoking the installer. An authentication or discovery failure must leave the last valid files untouched.
 - Ask for filesystem approval when the host requires it for writes under the user's home directory.
 - Treat `~/.clearskies/default-guidelines.md`, `tenant-profile.md`, and `schema-snapshot.json` as plugin-managed files.
-- Preserve all non-managed content in `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`.
+- Do not modify `~/.claude/CLAUDE.md` or `~/.codex/AGENTS.md` by default.
+- Install global loader blocks only when the user explicitly asks for always-on clearskies context and confirms the global edits. Preserve all content outside the plugin-owned marker blocks.
 
 ## Discover the schema
 
@@ -33,11 +34,16 @@ Discover the complete current CRM schema and install shared, rerunnable context 
       "kind": "standard",
       "fields": [
         {
-          "id": "field-id",
-          "label": "Account Name",
+          "id": "019f-canonical-field-definition-id",
+          "fieldId": "salesforce.Name",
           "name": "Name",
+          "source": "salesforce",
+          "label": "Account Name",
           "dataType": "string",
-          "validFilters": ["contains", "equal"]
+          "validFilters": ["contains", "equal"],
+          "enumValues": [],
+          "referenceToObj": null,
+          "editable": true
         }
       ]
     }
@@ -46,25 +52,35 @@ Discover the complete current CRM schema and install shared, rerunnable context 
 ```
 
 - Set `kind` to `standard` only for `account`, `contact`, `deal`, or `employee`; otherwise use `custom`.
-- Use `unknown` when field metadata does not expose a data type.
-- Set `name` to `null` when no API or source name is exposed.
+- Copy `id` as the canonical field-definition UUID and `fieldId` as the query-facing field key. Do not substitute one for the other.
+- Map the MCP response's `type` to `dataType`; use `unknown` only when no type is exposed.
+- Set missing `name`, `source`, `referenceToObj`, and `editable` values to `null`; set missing `enumValues` to `[]`.
 - Include every field, even when `validFilters` is empty.
 - Do not add keys containing sample values, counts, descriptions, transcripts, email content, or record data. The installer rejects unknown keys.
 
 ## Install or refresh context
 
-1. Resolve this skill's directory and save the completed snapshot to a temporary JSON file using an available file-writing tool.
-2. Run:
+1. Save the completed snapshot to a temporary JSON file using an available file-writing tool. The installer creates `~/.clearskies/` when it does not exist.
+2. Resolve the installer path for the current host:
+   - Claude Code: `${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`
+   - Codex: `scripts/install_context.py` inside the loaded `setup-clearskies` skill directory.
+3. When `python3` is available, run:
 
 ```bash
-python3 <setup-clearskies-skill-dir>/scripts/install_context.py --snapshot-file <temporary-json-file>
+python3 <resolved-installer-path> --snapshot-file <temporary-json-file>
 ```
 
-3. Read the JSON summary printed by the installer. Report:
+4. Read the JSON summary printed by the installer. Report:
    - whether this was the first setup;
    - added, removed, or changed objects;
    - added, removed, or changed fields;
-   - the three files under `~/.clearskies` and both managed host loaders.
-4. Delete the temporary snapshot when the environment permits it.
+   - the three files under `~/.clearskies`.
+5. Delete the temporary snapshot when the environment permits it.
 
-Rerun the entire workflow whenever synchronization changes. The installer normalizes the snapshot, compares it with the previous valid snapshot, updates files atomically, and replaces existing managed loader blocks instead of duplicating them.
+If `python3` is unavailable, do not install a runtime. Validate the exact snapshot shape above, prepare all three complete outputs in temporary files with the host's native file tools, compare the old and new snapshots, and replace the canonical files only after every discovery and preparation step succeeds. Leave any previous context intact on failure.
+
+Rerun the entire workflow whenever synchronization changes. The installer normalizes the snapshot, compares it with the previous valid snapshot, and updates files atomically.
+
+## Optional global loaders
+
+Skill-loaded context is the default and works in both Claude and Codex without global instruction bloat. Only after the user explicitly requests and confirms always-on context, rerun the installer with `--install-global-loaders`. That opt-in idempotently manages one marked block in each of `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`; it preserves all other user content. Do not pass this flag as part of ordinary setup or refresh.

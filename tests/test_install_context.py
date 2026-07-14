@@ -25,11 +25,16 @@ def snapshot() -> dict:
                 "kind": "standard",
                 "fields": [
                     {
-                        "id": "account-name",
+                        "id": "019f-field-definition",
+                        "fieldId": "salesforce.Name",
                         "label": "Account Name",
                         "name": "Name",
+                        "source": "salesforce",
                         "dataType": "string",
                         "validFilters": ["equal", "contains"],
+                        "enumValues": ["Customer", "Prospect"],
+                        "referenceToObj": None,
+                        "editable": True,
                     }
                 ],
             }
@@ -38,18 +43,37 @@ def snapshot() -> dict:
 
 
 class InstallContextTests(unittest.TestCase):
-    def run_installer(self, home: Path, data: dict) -> subprocess.CompletedProcess[str]:
+    def run_installer(
+        self, home: Path, data: dict, *, install_global_loaders: bool = False
+    ) -> subprocess.CompletedProcess[str]:
         snapshot_path = home / "input.json"
         snapshot_path.parent.mkdir(parents=True, exist_ok=True)
         snapshot_path.write_text(json.dumps(data), encoding="utf-8")
+        command = [sys.executable, str(SCRIPT), "--home", str(home), "--snapshot-file", str(snapshot_path)]
+        if install_global_loaders:
+            command.append("--install-global-loaders")
         return subprocess.run(
-            [sys.executable, str(SCRIPT), "--home", str(home), "--snapshot-file", str(snapshot_path)],
+            command,
             check=False,
             capture_output=True,
             text=True,
         )
 
-    def test_first_run_preserves_host_instructions_and_installs_context(self) -> None:
+    def test_first_run_creates_context_directory_only(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+
+            result = self.run_installer(home, snapshot())
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            summary = json.loads(result.stdout)
+            self.assertTrue(summary["firstRun"])
+            self.assertEqual(set(summary["files"]), {"defaultGuidelines", "tenantProfile", "schemaSnapshot"})
+            self.assertTrue((home / ".clearskies" / "schema-snapshot.json").is_file())
+            self.assertFalse((home / ".claude").exists())
+            self.assertFalse((home / ".codex").exists())
+
+    def test_default_run_does_not_touch_existing_global_instructions(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
             (home / ".claude").mkdir()
@@ -66,21 +90,32 @@ class InstallContextTests(unittest.TestCase):
             self.assertTrue((home / ".clearskies" / "default-guidelines.md").is_file())
             profile = (home / ".clearskies" / "tenant-profile.md").read_text(encoding="utf-8")
             self.assertIn("Account Name", profile)
-            self.assertNotIn("record values", json.dumps(snapshot()))
-            self.assertIn("Existing Claude rule", (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8"))
-            self.assertIn("Existing Codex rule", (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8"))
+            self.assertIn("salesforce.Name", profile)
+            self.assertIn("Customer", profile)
+            self.assertEqual(summary["globalLoadersInstalled"], False)
+            self.assertEqual(
+                (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8"), "# Existing Claude rule\n"
+            )
+            self.assertEqual(
+                (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8"), "# Existing Codex rule\n"
+            )
 
-    def test_rerun_replaces_managed_blocks_and_reports_schema_changes(self) -> None:
+    def test_rerun_replaces_context_and_reports_schema_changes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
             initial = snapshot()
             initial["objects"][0]["fields"].append(
                 {
                     "id": "legacy-field",
+                    "fieldId": "salesforce.Legacy__c",
                     "label": "Legacy Field",
                     "name": "Legacy__c",
+                    "source": "salesforce",
                     "dataType": "string",
                     "validFilters": [],
+                    "enumValues": [],
+                    "referenceToObj": None,
+                    "editable": False,
                 }
             )
             initial["objects"].append(
@@ -104,10 +139,30 @@ class InstallContextTests(unittest.TestCase):
             self.assertEqual(summary["objects"]["added"], ["custom_project"])
             self.assertEqual(summary["objects"]["removed"], ["legacy_object"])
             self.assertEqual(summary["objects"]["changed"], ["account"])
-            self.assertEqual(summary["fields"]["changed"], ["account.account-name"])
+            self.assertEqual(summary["fields"]["changed"], ["account.019f-field-definition"])
             self.assertEqual(summary["fields"]["removed"], ["account.legacy-field"])
-            self.assertEqual((home / ".claude" / "CLAUDE.md").read_text().count("clearskies-context:begin"), 1)
-            self.assertEqual((home / ".codex" / "AGENTS.md").read_text().count("clearskies-context:begin"), 1)
+
+    def test_global_loaders_require_opt_in_and_are_idempotent(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            (home / ".claude").mkdir()
+            (home / ".codex").mkdir()
+            (home / ".claude" / "CLAUDE.md").write_text("# Existing Claude rule\n", encoding="utf-8")
+            (home / ".codex" / "AGENTS.md").write_text("# Existing Codex rule\n", encoding="utf-8")
+
+            first = self.run_installer(home, snapshot(), install_global_loaders=True)
+            second = self.run_installer(home, snapshot(), install_global_loaders=True)
+
+            self.assertEqual(first.returncode, 0, first.stderr)
+            self.assertEqual(second.returncode, 0, second.stderr)
+            summary = json.loads(second.stdout)
+            self.assertTrue(summary["globalLoadersInstalled"])
+            claude = (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8")
+            codex = (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("Existing Claude rule", claude)
+            self.assertIn("Existing Codex rule", codex)
+            self.assertEqual(claude.count("clearskies-context:begin"), 1)
+            self.assertEqual(codex.count("clearskies-context:begin"), 1)
 
     def test_invalid_or_sensitive_snapshot_leaves_existing_context_untouched(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

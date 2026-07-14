@@ -31,6 +31,13 @@ It is the field-specific recipe on top of the general clearskies mechanics — f
 shapes, validation, and safe publishing, defer to the **clearskies-workflow-builder**
 skill and `workflow_capabilities_get`.
 
+## Load tenant context
+
+Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and
+`~/.clearskies/tenant-profile.md` when present. Continue with this skill's bundled
+guidance when they are absent. Treat the profile as schema-routing metadata, not
+current CRM record values.
+
 ## Operating rule
 
 Build from the reference pattern, but **never publish or modify a live workflow until

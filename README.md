@@ -1,10 +1,10 @@
 # clearskies-plugin
 
-Use Clearskies from **Claude Code** and **ChatGPT (Codex)**. The plugin connects to the
-Clearskies MCP, provides guidance for researching synced CRM and revenue-interaction data,
+Use clearskies from **Claude Code** and **ChatGPT (Codex)**. The plugin connects to the
+clearskies MCP, provides guidance for researching synced CRM and revenue-interaction data,
 learns each tenant's configured CRM schema, and retains the existing workflow-building skills.
 
-Clearskies can expose tenant-authorized CRM objects and fields, meetings, call transcripts,
+clearskies can expose tenant-authorized CRM objects and fields, meetings, call transcripts,
 and email. Available data depends on the customer's CRM and synchronization settings.
 
 ## Connector
@@ -15,7 +15,7 @@ The plugin bundles the remote `clearskies` MCP connector:
 https://mcp.clearskies.cc/mcp
 ```
 
-Claude or Codex handles authentication. A user may be prompted to connect Clearskies during
+Claude or Codex handles authentication. A user may be prompted to connect clearskies during
 installation or first use; the plugin does not store credentials.
 
 ## Skills
@@ -51,7 +51,7 @@ You can also say `setup clearskies` naturally.
 
 ### ChatGPT (Codex)
 
-Install `clearskies` from the Clearskies marketplace. The `.codex-plugin/plugin.json`
+Install `clearskies` from the clearskies marketplace. The `.codex-plugin/plugin.json`
 manifest bundles the same connector and skills. Invoke `$setup-clearskies` explicitly or say
 `setup clearskies`.
 
@@ -66,20 +66,29 @@ or fields. Setup reads CRM schema metadata only, then writes the shared source o
 ~/.clearskies/schema-snapshot.json
 ```
 
-It installs one managed loader block in each host's global instructions:
+Every clearskies data and workflow skill reads the canonical guidelines and tenant profile when they are
+available. This skill-loaded approach works across Claude and Codex without adding clearskies
+context to unrelated sessions.
+
+Setup does not change global host instructions by default. Users who explicitly want always-on
+context can opt in to one managed loader block in each host's global instructions:
 
 ```text
 ~/.claude/CLAUDE.md
 ~/.codex/AGENTS.md
 ```
 
-Existing content outside those marked blocks is preserved. Reruns replace rather than duplicate
-the blocks, rediscover the full current schema, and report added, removed, or changed objects and
-fields. A failed authentication, incomplete discovery, or invalid snapshot leaves the previous
-valid context untouched.
+The opt-in preserves existing content outside those marked blocks and replaces rather than
+duplicates them on later runs. Normal reruns rediscover the full current schema and report added,
+removed, or changed objects and fields. A failed authentication, incomplete discovery, or invalid
+snapshot leaves the previous valid context untouched.
 
-The generated context contains object and field metadata only. It never persists CRM record
-values, transcripts, or email bodies.
+The generated context contains object and field metadata only: canonical and query-facing field
+IDs, labels, API/source names, types, filters, enum values, references, and editability. It never
+persists CRM record values, transcripts, or email bodies.
+
+The deterministic installer uses `python3` when available. If it is unavailable, the setup skill
+uses the host's native file tools and does not install a runtime.
 
 Workflow skills draft and test changes before publication and never publish or edit live
 workflows without explicit approval.
