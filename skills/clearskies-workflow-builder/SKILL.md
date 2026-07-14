@@ -22,6 +22,13 @@ runtime — writing to the wrong record, resolving a variable to empty string, o
 finding nothing. This skill encodes the order of operations and the specific traps
 so a workflow you ship actually does what the user asked.
 
+## Load connected-data context
+
+Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and
+`~/.clearskies/data-profile.md` when present. Continue with this skill's bundled
+guidance when they are absent. Treat the data profile as schema-routing metadata, not
+current CRM record values.
+
 ## The golden rule
 
 **`workflow_validate` confirms the graph is well-formed and that its references
@@ -40,9 +47,9 @@ per-step inputs and outputs. Never publish on validation alone.
 
 Follow these in order. Don't skip to publishing.
 
-1. **Read the tenant's capabilities.** Call `workflow_capabilities_get` first — node
-   types, trigger types, and gated features are per-tenant and may differ from what
-   you remember. It is the source of truth for shape; `references/lessons.md` is the
+1. **Read the available workflow capabilities.** Call `workflow_capabilities_get` first — node
+   types, trigger types, and other options can change over time. It is the source of truth
+   for shape; `references/lessons.md` is the
    source of truth for the traps it omits.
 2. **Learn from a working example.** Call `workflows_list` with `includeConfig: true`
    and read a published workflow similar to the target. This is how you discover real
@@ -76,13 +83,13 @@ and wrong-record traps that `workflow_validate` cannot.
 **Safety:** `workflow_test_run_start` is **always** a dry run — it never writes to
 Salesforce (write steps report `dryRun: true` and show the exact recordId/field/value
 they *would* have written), and no Slack message or email is actually sent. Testing is
-therefore safe by construction; you do not need any flag to protect a test run.
+therefore safe by construction; you do not need any special setting to protect a test run.
 
 `requireHumanReview` is a **production-only** control, unrelated to testing: on a
 *live/published* workflow it holds the Salesforce write for a human to approve instead
 of auto-applying it. Decide it by production intent — set it when you want a human in
 the loop on live writes; leave it off when you want the published workflow to
-auto-write. Neither of these facts — that test runs never write, and that this flag
+auto-write. Neither of these facts — that test runs never write, and that this setting
 is production-only — is stated in the tool docs, so make it explicit to whoever
 inherits the workflow.
 
@@ -235,7 +242,7 @@ Full detail, with evidence, is in `references/lessons.md`. The ones that bite mo
 ## Reference & helper files
 
 - `references/lessons.md` — the complete, evidence-backed trap list, the draft/publish
-  model, trigger/node field details, known tenant field ids, and worked
+  model, trigger/node field details, known organization field ids, and worked
   valid/invalid dry-run examples. Read it before building anything non-trivial.
 - `scripts/inspect_run.sh` — `bash scripts/inspect_run.sh <run-json-file>` prints the
   per-step status/errors and resolved inputs/outputs from an overflowed

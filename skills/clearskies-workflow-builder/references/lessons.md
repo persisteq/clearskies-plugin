@@ -115,7 +115,7 @@ trace and confirm resolved values are real.
   green. Read the trace, don't trust the status.
 - `workflow_variables_get` accepts an inline configuration or a saved `workflowId`, and
   returns a compact tree: direct fields as dot-path `systemFields` plus related objects
-  as drillable `references` (each with `subFields` and a `drillable` flag) rather than a
+  as drillable `references` (each with `subFields` and a `drillable` indicator) rather than a
   fully-expanded graph. Use it to confirm a `{{...}}` path before referencing it.
 - A node may fan out to multiple downstream action nodes (branch), and all execute.
 
@@ -180,7 +180,7 @@ status, and title-text heuristics for "Hold"/"Prep"/"Block"/"Busy"/"OOO".
 - Step output refs: `{{<id>.output}}` (agent), `{{<id>.records}}` (find),
   `{{loop-1.<field>}}` / `{{loop-1.$value}}` / `{{loop-1.$index}}` (inside loop child).
 - `sendEmail`/`draftEmail` `fromUserId` accepts a person's id from `employees_list`
-  (or the tenant `userId` from `identity_get`) — either resolves to the sender.
+  (or the authenticated user's `userId` from `identity_get`) — either resolves to the sender.
 
 **Call-trigger meeting quality (why call workflows need a real filter).** Calendar
 sync excludes only native non-meeting event types — out-of-office, focus time,
@@ -196,8 +196,8 @@ quality-gate `aiFilterPrompt` and how to validate it against a real hold/prep ev
 
 ## 4. Resolving structured-filter field ids
 
-A structured filter's `fieldId` is a tenant-specific id — often an opaque UUID rather
-than the schema name. Don't hardcode ids from elsewhere; get them from your own tenant:
+A structured filter's `fieldId` is organization-specific — often an opaque UUID rather
+than the schema name. Don't hardcode ids from elsewhere; get them from the connected organization:
 
 - Read a published workflow that already filters on the field you want
   (`workflows_list includeConfig:true`) and copy its `fieldId` verbatim.
@@ -213,7 +213,7 @@ account-link field used with `isIn {{find.records}}` to join. Account records ca
 ## 5. Worked validation (copy this pattern)
 
 Reuse ONE scratch draft. Test runs are **always** dry runs, so writes never hit
-Salesforce during testing (trace shows `dryRun:true`) — no flag needed for safety.
+Salesforce during testing (trace shows `dryRun:true`) — no special setting is needed for safety.
 `requireHumanReview` is a production-only human-approval gate and irrelevant here.
 
 **Trigger inputs for non-scheduled workflows:** the examples below are scheduled

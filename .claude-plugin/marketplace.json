@@ -4,15 +4,15 @@
     "name": "clearskies"
   },
   "metadata": {
-    "description": "clearskies skills for building and shipping workflow-builder automations."
+    "description": "Research your connected CRM and revenue interactions, and build clearskies workflow automations."
   },
   "plugins": [
     {
       "name": "clearskies",
       "source": "./",
-      "description": "Author, validate, and safely publish clearskies workflows and agents, plus the RevOps recipe for putting a Salesforce field under AI maintenance.",
+      "description": "Research accounts, pipeline, calls, transcripts, and email, and safely build clearskies workflows.",
       "category": "productivity",
-      "keywords": ["clearskies", "workflow", "revops", "salesforce", "automation"]
+      "keywords": ["clearskies", "crm", "calls", "email", "workflow", "revops", "automation"]
     }
   ]
 }
