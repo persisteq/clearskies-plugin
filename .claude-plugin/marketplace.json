@@ -4,13 +4,13 @@
     "name": "clearskies"
   },
   "metadata": {
-    "description": "Research your connected CRM and revenue interactions, learn which data is available, and build workflow automations."
+    "description": "Research your connected CRM and revenue interactions, and build clearskies workflow automations."
   },
   "plugins": [
     {
       "name": "clearskies",
       "source": "./",
-      "description": "Research your CRM, calls, transcripts, and email; learn which objects and fields are connected; and safely publish clearskies workflows.",
+      "description": "Research accounts, pipeline, calls, transcripts, and email, and safely build clearskies workflows.",
       "category": "productivity",
       "keywords": ["clearskies", "crm", "calls", "email", "workflow", "revops", "automation"]
     }
