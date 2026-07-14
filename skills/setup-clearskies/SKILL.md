@@ -1,6 +1,6 @@
 ---
 name: setup-clearskies
-description: Set up or refresh clearskies connected-data context for Claude and Codex by discovering every synced CRM object and field and generating privacy-safe schema files under ~/.clearskies. Use after installing the clearskies plugin, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
+description: Set up or refresh clearskies context for Claude and Codex by discovering every connected CRM object and field and generating privacy-safe data files under ~/.clearskies. Use after installing the clearskies plugin, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
 ---
 
 # Setup clearskies
@@ -71,10 +71,12 @@ python3 <resolved-installer-path> --snapshot-file <temporary-json-file>
 ```
 
 4. Read the JSON summary printed by the installer. Report:
+   - a clear success message: `clearskies is ready` on first setup or `clearskies context refreshed` on later runs;
    - whether this was the first setup;
    - added, removed, or changed objects;
    - added, removed, or changed fields;
    - the three files under `~/.clearskies`.
+   Summarize the result in plain language. Do not expose installer internals unless troubleshooting.
 5. Delete the temporary snapshot when the environment permits it.
 
 If `python3` is unavailable, do not install a runtime. Validate the exact snapshot shape above, prepare all three complete outputs in temporary files with the host's native file tools, compare the old and new snapshots, and replace the canonical files only after every discovery and preparation step succeeds. Leave any previous context intact on failure.
@@ -83,4 +85,4 @@ Rerun the entire workflow whenever synchronization changes. The installer normal
 
 ## Optional global loaders
 
-Skill-loaded context is the default and works in both Claude and Codex without global instruction bloat. Only after the user explicitly requests and confirms always-on context, rerun the installer with `--install-global-loaders`. That opt-in idempotently manages one marked block in each of `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`; it preserves all other user content. Do not pass this flag as part of ordinary setup or refresh.
+Skill-loaded context is the default and works in both Claude and Codex while keeping unrelated sessions focused. Only after the user explicitly requests and confirms always-on context, rerun the installer with `--install-global-loaders`. That opt-in updates one marked block in each of `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md` without creating duplicates, and preserves all other user content. Do not use this option as part of ordinary setup or refresh.

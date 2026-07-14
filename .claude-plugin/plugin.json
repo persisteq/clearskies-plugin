@@ -2,7 +2,7 @@
   "name": "clearskies",
   "displayName": "clearskies",
   "version": "0.1.7",
-  "description": "Connect to clearskies CRM, meeting, call transcript, and email data; discover organization-specific schemas; and safely build revenue workflows.",
+  "description": "Use clearskies with your connected CRM, meetings, call transcripts, and email; learn which objects and fields are available; and safely build revenue workflows.",
   "author": {
     "name": "clearskies"
   },

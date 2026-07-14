@@ -47,9 +47,9 @@ per-step inputs and outputs. Never publish on validation alone.
 
 Follow these in order. Don't skip to publishing.
 
-1. **Read the organization's capabilities.** Call `workflow_capabilities_get` first — node
-   types, trigger types, and gated features can differ by organization from what
-   you remember. It is the source of truth for shape; `references/lessons.md` is the
+1. **Read the available workflow capabilities.** Call `workflow_capabilities_get` first — node
+   types, trigger types, and other options can change over time. It is the source of truth
+   for shape; `references/lessons.md` is the
    source of truth for the traps it omits.
 2. **Learn from a working example.** Call `workflows_list` with `includeConfig: true`
    and read a published workflow similar to the target. This is how you discover real
@@ -83,13 +83,13 @@ and wrong-record traps that `workflow_validate` cannot.
 **Safety:** `workflow_test_run_start` is **always** a dry run — it never writes to
 Salesforce (write steps report `dryRun: true` and show the exact recordId/field/value
 they *would* have written), and no Slack message or email is actually sent. Testing is
-therefore safe by construction; you do not need any flag to protect a test run.
+therefore safe by construction; you do not need any special setting to protect a test run.
 
 `requireHumanReview` is a **production-only** control, unrelated to testing: on a
 *live/published* workflow it holds the Salesforce write for a human to approve instead
 of auto-applying it. Decide it by production intent — set it when you want a human in
 the loop on live writes; leave it off when you want the published workflow to
-auto-write. Neither of these facts — that test runs never write, and that this flag
+auto-write. Neither of these facts — that test runs never write, and that this setting
 is production-only — is stated in the tool docs, so make it explicit to whoever
 inherits the workflow.
 

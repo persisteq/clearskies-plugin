@@ -1,6 +1,6 @@
 # clearskies revenue-data guidelines
 
-clearskies provides authorized access to synchronized CRM records and revenue interactions such as meetings, call transcripts, email, Slack threads, support tickets, and GitHub activity. Every organization's CRM, synchronized objects, fields, sources, and history can differ.
+clearskies provides access to synchronized CRM records and revenue interactions such as meetings, call transcripts, email, Slack threads, support tickets, and GitHub activity. Available objects, fields, sources, and history depend on the connected systems and sync settings.
 
 ## Discovery
 
@@ -8,7 +8,7 @@ clearskies provides authorized access to synchronized CRM records and revenue in
 - Inspect `object_get_fields_schema` before filtering. Use its query-facing `fieldId` and only the operators listed in each field's `validFilters`.
 - Treat `account`, `contact`, `deal`, and `employee` as standard objects with dedicated list tools. Query other returned object types with `crm_records_list`.
 - Treat the data profile in `~/.clearskies/data-profile.md` as routing metadata. Query the MCP for current values.
-- Use `identity_get` when exposed and the authenticated user or organization matters. Prefer server-side `ownedByMe` scoping over manually resolving an owner ID.
+- Use `identity_get` when exposed and the signed-in user matters. Prefer server-side `ownedByMe` scoping over manually resolving an owner ID.
 
 ## Search and pagination
 
@@ -42,4 +42,4 @@ clearskies provides authorized access to synchronized CRM records and revenue in
 - Keep internal employees separate from external contacts.
 - Do not expose unrelated customer data or persist record values, transcripts, or email bodies in setup files.
 - Do not use workflow tools for ordinary research. Ask for confirmation before changing CRM or workflow state.
-- `deep_research` starts a feature-gated research job and is not an ordinary read. Use it only when the user explicitly asks for deep research, then poll its status tool as instructed.
+- When available, `deep_research` starts a longer-running research job. Use it only when the user explicitly asks for deep research, then check its status as instructed until it finishes.

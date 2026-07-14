@@ -1,11 +1,11 @@
 ---
 name: use-clearskies-revenue-data
-description: Query and synthesize revenue context from the clearskies MCP across organization-specific CRM objects, accounts, contacts, deals, employees, meetings, call transcripts, and email. Use whenever a user asks to research an account or person, inspect pipeline or CRM data, prepare for or recap a meeting, find call or email evidence, or answer a revenue question from clearskies outside the workflow builder.
+description: Query and synthesize revenue context from the clearskies MCP across connected CRM objects, accounts, contacts, deals, employees, meetings, call transcripts, and email. Use whenever a user asks to research an account or person, inspect pipeline or CRM data, prepare for or recap a meeting, find call or email evidence, or answer a revenue question from clearskies outside the workflow builder.
 ---
 
 # Use clearskies revenue data
 
-Use the organization's synced clearskies data without assuming its CRM, objects, fields, or coverage.
+Use the available clearskies data without assuming which CRM, objects, fields, or history are connected.
 
 ## Load context
 
@@ -25,8 +25,8 @@ Use the organization's synced clearskies data without assuming its CRM, objects,
 - Use `events_get_contents` only after selecting specific event IDs whose transcript, email body, or other content is needed.
 - Use `calendar_get_upcoming` only for future calendar windows.
 - When exposed, use `support_tickets_list` and `github_activities_list` for their dedicated activity types.
-- When exposed, call `identity_get` to verify the authenticated user and organization when identity matters. Prefer `ownedByMe` over manually filtering by the returned person ID.
-- `deep_research` starts a feature-gated research job. Use it only when the user explicitly requests deep research, then follow its status tool until terminal.
+- When exposed, call `identity_get` to verify the signed-in user when identity matters. Prefer `ownedByMe` over manually filtering by the returned person ID.
+- When available, `deep_research` starts a longer-running research job. Use it only when the user explicitly requests deep research, then follow its status tool until completion.
 
 ## Query safely
 

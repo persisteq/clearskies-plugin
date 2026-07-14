@@ -115,7 +115,7 @@ trace and confirm resolved values are real.
   green. Read the trace, don't trust the status.
 - `workflow_variables_get` accepts an inline configuration or a saved `workflowId`, and
   returns a compact tree: direct fields as dot-path `systemFields` plus related objects
-  as drillable `references` (each with `subFields` and a `drillable` flag) rather than a
+  as drillable `references` (each with `subFields` and a `drillable` indicator) rather than a
   fully-expanded graph. Use it to confirm a `{{...}}` path before referencing it.
 - A node may fan out to multiple downstream action nodes (branch), and all execute.
 
@@ -213,7 +213,7 @@ account-link field used with `isIn {{find.records}}` to join. Account records ca
 ## 5. Worked validation (copy this pattern)
 
 Reuse ONE scratch draft. Test runs are **always** dry runs, so writes never hit
-Salesforce during testing (trace shows `dryRun:true`) — no flag needed for safety.
+Salesforce during testing (trace shows `dryRun:true`) — no special setting is needed for safety.
 `requireHumanReview` is a production-only human-approval gate and irrelevant here.
 
 **Trigger inputs for non-scheduled workflows:** the examples below are scheduled
