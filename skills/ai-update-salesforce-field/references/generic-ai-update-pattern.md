@@ -6,7 +6,7 @@ the value — and keeps every field-specific detail in the step `userMessage`. T
 two agents serve every field you put under AI maintenance; only the messages change.
 
 Resolve the concrete ids it needs (object, field, account-lookup field, role, agent)
-from this tenant — via `workflows_list includeConfig:true`, `object_get_fields_schema`,
+from this organization — via `workflows_list includeConfig:true`, `object_get_fields_schema`,
 or `workflow_variables_get` — or ask; don't hardcode or guess them.
 
 Default trigger: **call ended.**
@@ -50,7 +50,7 @@ in flow order — the labels are what keep it readable.)
 
 ## Baseline filters
 
-**Role gate** (`filter-1`) — use this tenant's role ids/names (from an existing
+**Role gate** (`filter-1`) — use this organization's role ids/names (from an existing
 workflow's config or `workflow_variables_get`):
 
 ```json
@@ -59,7 +59,7 @@ workflow's config or `workflow_variables_get`):
   "fieldId": "meeting.attendees.UserRoleId",
   "operator": "isIn",
   "value": [
-    {"id": "<TENANT_ROLE_ID>", "name": "<ROLE_NAME>"}
+    {"id": "<ORGANIZATION_ROLE_ID>", "name": "<ROLE_NAME>"}
   ],
   "conditions": []
 }
@@ -120,7 +120,7 @@ records per call).
 
 ## Reusable relevance agent (`agent-1`)
 
-Field-agnostic **template / system prompt** — keep it free of any tenant- or
+Field-agnostic **template / system prompt** — keep it free of any organization- or
 field-specific content; that all arrives in the `userMessage`:
 
 ```text
@@ -215,7 +215,7 @@ Continue only if the following relevance check output has should_continue equal 
 
 ## Reusable generation agent (`agent-2`)
 
-Field-agnostic **template / system prompt** — again, no tenant- or field-specific
+Field-agnostic **template / system prompt** — again, no organization- or field-specific
 content here; it arrives in the `userMessage`:
 
 ```text

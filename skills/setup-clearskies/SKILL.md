@@ -1,6 +1,6 @@
 ---
 name: setup-clearskies
-description: Set up or refresh clearskies tenant context for Claude and Codex by discovering every synced CRM object and field and generating privacy-safe schema files under ~/.clearskies. Use after installing the clearskies plugin, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
+description: Set up or refresh clearskies connected-data context for Claude and Codex by discovering every synced CRM object and field and generating privacy-safe schema files under ~/.clearskies. Use after installing the clearskies plugin, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
 ---
 
 # Setup clearskies
@@ -12,7 +12,7 @@ Discover the complete current CRM schema and install shared, rerunnable context 
 - Read metadata only. Do not fetch CRM record values, event contents, transcripts, or email bodies.
 - Complete all MCP discovery before invoking the installer. An authentication or discovery failure must leave the last valid files untouched.
 - Ask for filesystem approval when the host requires it for writes under the user's home directory.
-- Treat `~/.clearskies/default-guidelines.md`, `tenant-profile.md`, and `schema-snapshot.json` as plugin-managed files.
+- Treat `~/.clearskies/default-guidelines.md`, `data-profile.md`, and `schema-snapshot.json` as plugin-managed files.
 - Do not modify `~/.claude/CLAUDE.md` or `~/.codex/AGENTS.md` by default.
 - Install global loader blocks only when the user explicitly asks for always-on clearskies context and confirms the global edits. Preserve all content outside the plugin-owned marker blocks.
 

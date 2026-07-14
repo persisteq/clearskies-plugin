@@ -218,7 +218,7 @@ def _markdown(value: Any) -> str:
 def render_profile(snapshot: dict[str, Any]) -> str:
     field_count = sum(len(item["fields"]) for item in snapshot["objects"])
     lines = [
-        "# clearskies tenant CRM profile",
+        "# clearskies CRM data profile",
         "",
         "> Managed by the clearskies plugin. Rerun `setup clearskies` after CRM synchronization changes.",
         "> This file contains schema metadata only; it does not contain CRM values, transcripts, or email bodies.",
@@ -361,7 +361,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
 
     contents = {
         context_dir / "default-guidelines.md": default_guidelines,
-        context_dir / "tenant-profile.md": profile,
+        context_dir / "data-profile.md": profile,
         snapshot_target: normalized_json,
     }
     claude_path = home / ".claude" / "CLAUDE.md"
@@ -374,7 +374,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
                 BEGIN_MARKER,
                 "# clearskies context (managed by the clearskies plugin)",
                 "@~/.clearskies/default-guidelines.md",
-                "@~/.clearskies/tenant-profile.md",
+                "@~/.clearskies/data-profile.md",
                 END_MARKER,
             ]
         )
@@ -382,7 +382,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
             [
                 BEGIN_MARKER,
                 "## clearskies context (managed by the clearskies plugin)",
-                "Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and `~/.clearskies/tenant-profile.md`.",
+                "Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md`.",
                 END_MARKER,
             ]
         )
@@ -394,7 +394,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
     result = diff_snapshots(old_snapshot, snapshot)
     files = {
         "defaultGuidelines": str(context_dir / "default-guidelines.md"),
-        "tenantProfile": str(context_dir / "tenant-profile.md"),
+        "dataProfile": str(context_dir / "data-profile.md"),
         "schemaSnapshot": str(snapshot_target),
     }
     if install_global_loaders:

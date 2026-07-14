@@ -23,7 +23,7 @@ account, scores whether the transcript is genuinely relevant to the target field
 generates the field's new value if so, and writes it back to Salesforce.
 
 Two AI steps do the work, and both are **reusable and field-agnostic**: a **relevance
-agent** and a **generation agent**. Their templates carry no field- or tenant-specific
+agent** and a **generation agent**. Their templates carry no field- or organization-specific
 content — everything specific to a field arrives in the step `userMessage`. So the same
 two agents serve every field you put under AI maintenance; only the messages change.
 
@@ -31,11 +31,11 @@ It is the field-specific recipe on top of the general clearskies mechanics — f
 shapes, validation, and safe publishing, defer to the **clearskies-workflow-builder**
 skill and `workflow_capabilities_get`.
 
-## Load tenant context
+## Load connected-data context
 
 Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and
-`~/.clearskies/tenant-profile.md` when present. Continue with this skill's bundled
-guidance when they are absent. Treat the profile as schema-routing metadata, not
+`~/.clearskies/data-profile.md` when present. Continue with this skill's bundled
+guidance when they are absent. Treat the data profile as schema-routing metadata, not
 current CRM record values.
 
 ## Operating rule
@@ -146,7 +146,7 @@ Before presenting the proposed workflow, confirm:
 - The update field belongs to the **same object** returned by `find-1`.
 - `updateSalesforce.field` uses `find-1.records.<Field_API_Name>` and `recordId` is
   `{{find-1.records.sfRecordId}}`.
-- The reusable relevance and generation agent **templates contain no tenant- or
+- The reusable relevance and generation agent **templates contain no organization- or
   field-specific details** — all of that lives in the `agent-1` / `agent-2`
   `userMessage`s (field label, API name, definition, what-belongs, exclusions,
   threshold, output format).
@@ -158,7 +158,7 @@ Before presenting the proposed workflow, confirm:
 - `find-1.limit` is `1` (the write is single-record); if RevOps needs to update several
   records per call, wrap the update in a `loop` instead.
 - Structured filter `fieldId`s (the role gate and the account lookup) are real for this
-  tenant — confirm them in a dry run; if `find-1` fails at runtime with `"filter field
+  organization — confirm them in a dry run; if `find-1` fails at runtime with `"filter field
   not found"`, switch that condition to an `aiFindPrompt`.
 - Both a relevant meeting (proceeds and writes) and an irrelevant one (stops at
   `filter-3`, writes nothing) have been dry-run before any publish.

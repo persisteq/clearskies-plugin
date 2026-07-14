@@ -68,8 +68,9 @@ class InstallContextTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             summary = json.loads(result.stdout)
             self.assertTrue(summary["firstRun"])
-            self.assertEqual(set(summary["files"]), {"defaultGuidelines", "tenantProfile", "schemaSnapshot"})
+            self.assertEqual(set(summary["files"]), {"defaultGuidelines", "dataProfile", "schemaSnapshot"})
             self.assertTrue((home / ".clearskies" / "schema-snapshot.json").is_file())
+            self.assertTrue((home / ".clearskies" / "data-profile.md").is_file())
             self.assertFalse((home / ".claude").exists())
             self.assertFalse((home / ".codex").exists())
 
@@ -88,7 +89,7 @@ class InstallContextTests(unittest.TestCase):
             self.assertTrue(summary["firstRun"])
             self.assertEqual(summary["objects"]["added"], ["account"])
             self.assertTrue((home / ".clearskies" / "default-guidelines.md").is_file())
-            profile = (home / ".clearskies" / "tenant-profile.md").read_text(encoding="utf-8")
+            profile = (home / ".clearskies" / "data-profile.md").read_text(encoding="utf-8")
             self.assertIn("Account Name", profile)
             self.assertIn("salesforce.Name", profile)
             self.assertIn("Customer", profile)
@@ -161,6 +162,8 @@ class InstallContextTests(unittest.TestCase):
             codex = (home / ".codex" / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn("Existing Claude rule", claude)
             self.assertIn("Existing Codex rule", codex)
+            self.assertIn("~/.clearskies/data-profile.md", claude)
+            self.assertIn("~/.clearskies/data-profile.md", codex)
             self.assertEqual(claude.count("clearskies-context:begin"), 1)
             self.assertEqual(codex.count("clearskies-context:begin"), 1)
 
@@ -169,7 +172,7 @@ class InstallContextTests(unittest.TestCase):
             home = Path(temporary)
             first = self.run_installer(home, snapshot())
             self.assertEqual(first.returncode, 0, first.stderr)
-            profile_path = home / ".clearskies" / "tenant-profile.md"
+            profile_path = home / ".clearskies" / "data-profile.md"
             original_profile = profile_path.read_text(encoding="utf-8")
 
             invalid = copy.deepcopy(snapshot())

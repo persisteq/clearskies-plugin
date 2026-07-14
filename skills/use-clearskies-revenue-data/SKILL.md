@@ -1,17 +1,17 @@
 ---
 name: use-clearskies-revenue-data
-description: Query and synthesize revenue context from the clearskies MCP across tenant-specific CRM objects, accounts, contacts, deals, employees, meetings, call transcripts, and email. Use whenever a user asks to research an account or person, inspect pipeline or CRM data, prepare for or recap a meeting, find call or email evidence, or answer a revenue question from clearskies outside the workflow builder.
+description: Query and synthesize revenue context from the clearskies MCP across organization-specific CRM objects, accounts, contacts, deals, employees, meetings, call transcripts, and email. Use whenever a user asks to research an account or person, inspect pipeline or CRM data, prepare for or recap a meeting, find call or email evidence, or answer a revenue question from clearskies outside the workflow builder.
 ---
 
 # Use clearskies revenue data
 
-Use the tenant's synced clearskies data without assuming its CRM, objects, fields, or coverage.
+Use the organization's synced clearskies data without assuming its CRM, objects, fields, or coverage.
 
 ## Load context
 
-1. Read `~/.clearskies/default-guidelines.md` and `~/.clearskies/tenant-profile.md` when they exist.
+1. Read `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md` when they exist.
 2. Otherwise read [references/default-guidelines.md](references/default-guidelines.md).
-3. Treat the tenant profile as a discovery aid, not proof that a record or event still exists. Query the MCP for current answers.
+3. Treat the data profile as a discovery aid, not proof that a record or event still exists. Query the MCP for current answers.
 
 ## Choose tools
 
@@ -25,7 +25,7 @@ Use the tenant's synced clearskies data without assuming its CRM, objects, field
 - Use `events_get_contents` only after selecting specific event IDs whose transcript, email body, or other content is needed.
 - Use `calendar_get_upcoming` only for future calendar windows.
 - When exposed, use `support_tickets_list` and `github_activities_list` for their dedicated activity types.
-- When exposed, call `identity_get` to verify the authenticated user and tenant when identity matters. Prefer `ownedByMe` over manually filtering by the returned person ID.
+- When exposed, call `identity_get` to verify the authenticated user and organization when identity matters. Prefer `ownedByMe` over manually filtering by the returned person ID.
 - `deep_research` starts a feature-gated research job. Use it only when the user explicitly requests deep research, then follow its status tool until terminal.
 
 ## Query safely

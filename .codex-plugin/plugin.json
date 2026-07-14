@@ -1,7 +1,7 @@
 {
   "name": "clearskies",
   "version": "0.1.7",
-  "description": "Connect to clearskies CRM, meeting, call transcript, and email data; discover tenant-specific schemas; and safely build revenue workflows.",
+  "description": "Connect to clearskies CRM, meeting, call transcript, and email data; discover organization-specific schemas; and safely build revenue workflows.",
   "author": {
     "name": "clearskies"
   },
@@ -13,13 +13,13 @@
   "interface": {
     "displayName": "clearskies",
     "shortDescription": "Use clearskies revenue data and workflows.",
-    "longDescription": "Research CRM records, calls, transcripts, and email; learn each tenant's synced schema; and author or publish clearskies workflows.",
+    "longDescription": "Research CRM records, calls, transcripts, and email; learn the connected organization's synced schema; and author or publish clearskies workflows.",
     "developerName": "clearskies",
     "category": "Productivity",
     "capabilities": ["Interactive", "Write"],
     "websiteURL": "https://app.clearskies.cc",
     "defaultPrompt": [
-      "Set up clearskies for this tenant.",
+      "Set up clearskies for this organization.",
       "Research this account using CRM, calls, and email.",
       "Help me build a clearskies workflow."
     ],

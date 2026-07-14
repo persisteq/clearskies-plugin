@@ -22,11 +22,11 @@ runtime — writing to the wrong record, resolving a variable to empty string, o
 finding nothing. This skill encodes the order of operations and the specific traps
 so a workflow you ship actually does what the user asked.
 
-## Load tenant context
+## Load connected-data context
 
 Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and
-`~/.clearskies/tenant-profile.md` when present. Continue with this skill's bundled
-guidance when they are absent. Treat the profile as schema-routing metadata, not
+`~/.clearskies/data-profile.md` when present. Continue with this skill's bundled
+guidance when they are absent. Treat the data profile as schema-routing metadata, not
 current CRM record values.
 
 ## The golden rule
@@ -47,8 +47,8 @@ per-step inputs and outputs. Never publish on validation alone.
 
 Follow these in order. Don't skip to publishing.
 
-1. **Read the tenant's capabilities.** Call `workflow_capabilities_get` first — node
-   types, trigger types, and gated features are per-tenant and may differ from what
+1. **Read the organization's capabilities.** Call `workflow_capabilities_get` first — node
+   types, trigger types, and gated features can differ by organization from what
    you remember. It is the source of truth for shape; `references/lessons.md` is the
    source of truth for the traps it omits.
 2. **Learn from a working example.** Call `workflows_list` with `includeConfig: true`
@@ -242,7 +242,7 @@ Full detail, with evidence, is in `references/lessons.md`. The ones that bite mo
 ## Reference & helper files
 
 - `references/lessons.md` — the complete, evidence-backed trap list, the draft/publish
-  model, trigger/node field details, known tenant field ids, and worked
+  model, trigger/node field details, known organization field ids, and worked
   valid/invalid dry-run examples. Read it before building anything non-trivial.
 - `scripts/inspect_run.sh` — `bash scripts/inspect_run.sh <run-json-file>` prints the
   per-step status/errors and resolved inputs/outputs from an overflowed

@@ -1,14 +1,14 @@
 # clearskies revenue-data guidelines
 
-clearskies provides tenant-authorized access to synchronized CRM records and revenue interactions such as meetings, call transcripts, email, Slack threads, support tickets, and GitHub activity. Every tenant's CRM, synchronized objects, fields, sources, and history can differ.
+clearskies provides authorized access to synchronized CRM records and revenue interactions such as meetings, call transcripts, email, Slack threads, support tickets, and GitHub activity. Every organization's CRM, synchronized objects, fields, sources, and history can differ.
 
 ## Discovery
 
 - Discover configured object types with `object_definitions_list` instead of assuming Salesforce, HubSpot, or a standard schema.
 - Inspect `object_get_fields_schema` before filtering. Use its query-facing `fieldId` and only the operators listed in each field's `validFilters`.
 - Treat `account`, `contact`, `deal`, and `employee` as standard objects with dedicated list tools. Query other returned object types with `crm_records_list`.
-- Treat the tenant profile in `~/.clearskies/tenant-profile.md` as routing metadata. Query the MCP for current values.
-- Use `identity_get` when exposed and the authenticated user or tenant matters. Prefer server-side `ownedByMe` scoping over manually resolving an owner ID.
+- Treat the data profile in `~/.clearskies/data-profile.md` as routing metadata. Query the MCP for current values.
+- Use `identity_get` when exposed and the authenticated user or organization matters. Prefer server-side `ownedByMe` scoping over manually resolving an owner ID.
 
 ## Search and pagination
 

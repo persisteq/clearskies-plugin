@@ -2,9 +2,9 @@
 
 Use clearskies from **Claude Code** and **ChatGPT (Codex)**. The plugin connects to the
 clearskies MCP, provides guidance for researching synced CRM and revenue-interaction data,
-learns each tenant's configured CRM schema, and retains the existing workflow-building skills.
+learns each organization's configured CRM schema, and retains the existing workflow-building skills.
 
-clearskies can expose tenant-authorized CRM objects and fields, meetings, call transcripts,
+clearskies can expose authorized CRM objects and fields, meetings, call transcripts,
 and email. Available data depends on the customer's CRM and synchronization settings.
 
 ## Connector
@@ -22,7 +22,7 @@ installation or first use; the plugin does not store credentials.
 
 - **[use-clearskies-revenue-data](skills/use-clearskies-revenue-data/SKILL.md)** — research
   accounts, contacts, deals, custom CRM records, meetings, transcripts, and email without
-  assuming a tenant's CRM schema.
+  assuming an organization's CRM schema.
 - **[setup-clearskies](skills/setup-clearskies/SKILL.md)** — discover or refresh every synced
   CRM object and field, then install shared privacy-safe context for Claude and Codex.
 - **[clearskies-workflow-builder](skills/clearskies-workflow-builder/SKILL.md)** — author,
@@ -55,18 +55,18 @@ Install `clearskies` from the clearskies marketplace. The `.codex-plugin/plugin.
 manifest bundles the same connector and skills. Invoke `$setup-clearskies` explicitly or say
 `setup clearskies`.
 
-## Set up or refresh tenant context
+## Set up or refresh connected-data context
 
 Run setup after installation and again whenever the customer changes synchronized CRM objects
 or fields. Setup reads CRM schema metadata only, then writes the shared source of truth:
 
 ```text
 ~/.clearskies/default-guidelines.md
-~/.clearskies/tenant-profile.md
+~/.clearskies/data-profile.md
 ~/.clearskies/schema-snapshot.json
 ```
 
-Every clearskies data and workflow skill reads the canonical guidelines and tenant profile when they are
+Every clearskies data and workflow skill reads the canonical guidelines and data profile when they are
 available. This skill-loaded approach works across Claude and Codex without adding clearskies
 context to unrelated sessions.
 
