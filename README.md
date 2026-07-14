@@ -1,6 +1,6 @@
 # clearskies
 
-Bring the revenue context already connected to clearskies into Claude Code or Codex. Research
+Bring the revenue context already connected to clearskies into Claude or ChatGPT (Codex). Research
 accounts and deals, prepare for meetings, find evidence across customer interactions, and build
 reliable RevOps workflows without switching between systems.
 
@@ -11,21 +11,33 @@ records, meetings, call transcripts, email, Slack threads, support tickets, and 
 
 ### 1. Install the plugin
 
-#### Claude Code
+#### Claude
 
-Add the clearskies marketplace, then install the plugin:
+1. In Claude, go to **Customize** and select **Plugins**.
+2. Click **Add**.
+3. Select **Add marketplace**.
+4. Paste this repository:
 
 ```text
-/plugin marketplace add persisteq/clearskies-plugin
-/plugin install clearskies@clearskies-marketplace
+github.com/persisteq/clearskies-plugin
 ```
 
-#### Codex
+5. Open **clearskies** from the new marketplace and install it.
 
-Open **Plugins**, add `https://github.com/persisteq/clearskies-plugin` as a marketplace, and
-install **clearskies**.
+#### ChatGPT (Codex)
 
-Claude or Codex will prompt you to connect clearskies when authentication is needed. The plugin
+1. In ChatGPT, open the **Plugins** page.
+2. Click the arrow next to **Create**.
+3. Select **Add marketplace**.
+4. Paste this repository:
+
+```text
+github.com/persisteq/clearskies-plugin
+```
+
+5. Open **clearskies** from the new marketplace and install it.
+
+Claude or ChatGPT will prompt you to connect clearskies when authentication is needed. The plugin
 does not store your credentials.
 
 ### 2. Set up clearskies
@@ -45,7 +57,7 @@ replace the previous profile only after discovery succeeds and report what chang
 
 If you prefer an explicit skill command, use:
 
-- Claude Code: `/clearskies:setup-clearskies`
+- Claude: `/clearskies:setup-clearskies`
 - Codex: `$setup-clearskies`
 
 ### 3. Ask a revenue question
@@ -69,7 +81,7 @@ You can ask naturally. For example:
 | [`clearskies-workflow-builder`](skills/clearskies-workflow-builder/SKILL.md) | Creating, changing, testing, troubleshooting, and publishing revenue workflows. |
 | [`ai-update-salesforce-field`](skills/ai-update-salesforce-field/SKILL.md) | Keeping a chosen Salesforce field up to date from relevant meeting content. |
 
-You do not need to remember skill names—describe the outcome you want and Claude or Codex will use
+You do not need to remember skill names—describe the outcome you want and Claude or ChatGPT will use
 the appropriate skill. The explicit names are useful when you want to invoke one directly.
 
 ## Common RevOps use cases
