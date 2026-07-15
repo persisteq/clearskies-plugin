@@ -21,6 +21,7 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 - Use `account_get_contacts` and `account_get_deals` after identifying an account.
 - Use `crm_records_list` only for custom object types returned by `object_definitions_list`.
 - Use `records_aggregate` for counts, sums, averages, minimums, maximums, and grouped totals. Never list pages of records merely to count them.
+- Treat CRM objects and activity data as separate discovery surfaces. `event` may not appear in `object_definitions_list`; call `object_get_fields_schema` with `objectType: "event"` before using unfamiliar event field filters.
 - Use `events_list` for chronological activity or exact filters. Use `events_search` for semantic topic search; entity filters are optional.
 - Use `events_get_contents` only after selecting specific event IDs whose transcript, email body, or other content is needed.
 - Use `calendar_get_upcoming` only for future calendar windows.
@@ -39,6 +40,7 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 7. Follow cursors when the answer may span more than one page. Do not claim completeness from a truncated page.
 8. Widen a date range only after the requested range returns nothing, and state that the range was widened.
 9. Keep reads proportional. Fetch full event contents only for the events used in the answer.
+10. For call or transcript requests, inspect the `event` schema before the first `events_list` call when event field filters are needed. Start with explicit time bounds and `internal.type = meeting`. When the recording provider is known, use the top-level `provider` filter to exclude calendar-only meetings. A provider-linked call does not guarantee a transcript: select relevant event IDs, call `events_get_contents`, and verify transcript content before using it. Do not begin with a broad, unfiltered calendar page.
 
 ## Synthesize evidence
 
