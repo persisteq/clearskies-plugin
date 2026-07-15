@@ -28,10 +28,14 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 
 ## Meetings, calls, and email
 
+- Activity data is separate from CRM object discovery. `event` may not appear in `object_definitions_list`; this does not mean activity data is unavailable. Before applying event field filters, call `object_get_fields_schema` with `objectType: "event"`.
 - Use `events_list` for time-ordered browsing, exact entity filters, and event types. Synced types can include `meeting`, `email`, `slack_thread`, `support_ticket`, and `github_activity`.
 - Use `events_search` for semantic topic questions. Entity filters can narrow a search but are not required.
 - Use explicit RFC3339 UTC time bounds for named periods. For latest past activity, end the range at the current time.
+- For call or transcript requests, inspect the `event` schema before the first `events_list` call when event field filters are needed. Start with explicit time bounds and an `internal.type = meeting` filter instead of fetching a broad, unfiltered calendar page.
+- When the recording provider is known, use the top-level `provider` filter to exclude calendar-only meetings. This returns meetings linked to a call from that provider; it does not guarantee that transcript content is available.
 - Select event IDs before calling `events_get_contents`; retrieve only the transcripts or email bodies needed for the answer.
+- Verify that transcript content exists before describing an event as a call with a transcript.
 - If the requested period is empty, widen it only when useful and disclose the wider period.
 - When exposed, use `support_tickets_list` and `github_activities_list` for focused ticket or engineering-activity queries.
 
