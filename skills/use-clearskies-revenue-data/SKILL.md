@@ -42,17 +42,6 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 9. Fetch full event contents only for the events used in the answer.
 10. For call or transcript requests, inspect the `event` schema before the first `events_list` call when event field filters are needed. Start with explicit time bounds and `internal.type = meeting`. When the recording provider is known, use the top-level `provider` filter to exclude calendar-only meetings. A provider-linked call does not guarantee a transcript: select relevant event IDs, call `events_get_contents`, and verify transcript content before using it. Do not begin with a broad, unfiltered calendar page.
 
-## Match investigation effort to the question type
-
-- **Lookup** (one fact or record): use minimum calls; stop once confirmed.
-- **Metric or report** (counts, sums, or breakdowns): aggregate first; reconcile totals two independent ways before reporting.
-- **Synthesis across content** (themes, feedback, or objections across calls or email): run multiple query angles with different phrasings; stop at saturation, when a new angle surfaces nothing new, not at a call budget.
-- **Audit or verification**: take an adversarial stance; re-derive numbers rather than trusting prior summaries or the data profile; follow anomalies where they lead instead of completing a fixed checklist.
-
-**Disclose rather than truncate.** Proportionality limits redundancy, never silently limits coverage. If you cap effort, state exactly what was not searched, such as "one semantic pass; narrower queries could surface more." Never present a bounded search as exhaustive.
-
-**Apply a cheap-completeness floor.** A single batched call—resolving entity IDs to names, fetching a final page, or running one cross-check aggregate—never counts against proportionality. Spend it rather than degrade attribution or verification.
-
 ## Synthesize evidence
 
 - Combine CRM state with relevant meeting, email, Slack thread, support-ticket, or GitHub-activity evidence when that improves the answer and those sources are synchronized.
