@@ -1,6 +1,6 @@
 ---
 name: setup-clearskies
-description: Set up or refresh clearskies context for Claude and Codex by discovering every connected CRM object and field and generating privacy-safe data files under ~/.clearskies. Use after installing the clearskies plugin, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
+description: Set up or refresh clearskies context for Claude and Codex by discovering every connected CRM object and field and generating privacy-safe data files under ~/.clearskies. Use after installing or updating the clearskies plugin, when cached context is missing or stale, when a user says "setup clearskies," or whenever CRM objects or synchronized fields have changed.
 ---
 
 # Setup clearskies
@@ -12,7 +12,7 @@ Discover the complete current CRM schema and install shared, rerunnable context 
 - Read metadata only. Do not fetch CRM record values, event contents, transcripts, or email bodies.
 - Complete all MCP discovery before invoking the installer. An authentication or discovery failure must leave the last valid files untouched.
 - Ask for filesystem approval when the host requires it for writes under the user's home directory.
-- Treat `~/.clearskies/default-guidelines.md`, `data-profile.md`, and `schema-snapshot.json` as plugin-managed files.
+- Treat `~/.clearskies/context-metadata.json`, `default-guidelines.md`, `data-profile.md`, and `schema-snapshot.json` as plugin-managed files.
 - Do not modify `~/.claude/CLAUDE.md` or `~/.codex/AGENTS.md` by default.
 - Install global loader blocks only when the user explicitly asks for always-on clearskies context and confirms the global edits. Preserve all content outside the plugin-owned marker blocks.
 
@@ -73,15 +73,20 @@ python3 <resolved-installer-path> --snapshot-file <temporary-json-file>
 4. Read the JSON summary printed by the installer. Report:
    - a clear success message: `clearskies is ready` on first setup or `clearskies context refreshed` on later runs;
    - whether this was the first setup;
+   - the current plugin version and whether the cached version changed;
    - added, removed, or changed objects;
    - added, removed, or changed fields;
-   - the three files under `~/.clearskies`.
+   - the four files under `~/.clearskies`.
    Summarize the result in plain language. Do not expose installer internals unless troubleshooting.
 5. Delete the temporary snapshot when the environment permits it.
 
-If `python3` is unavailable, do not install a runtime. Validate the exact snapshot shape above, prepare all three complete outputs in temporary files with the host's native file tools, compare the old and new snapshots, and replace the canonical files only after every discovery and preparation step succeeds. Leave any previous context intact on failure.
+If `python3` is unavailable, do not install a runtime. Validate the exact snapshot shape above, prepare all four complete outputs in temporary files with the host's native file tools, compare the old and new snapshots, and replace the canonical files only after every discovery and preparation step succeeds. Set `context-metadata.json` to schema version `1`, the current host manifest's plugin version, and the snapshot's `generatedAt`. Leave any previous context intact on failure.
 
 Rerun the entire workflow whenever synchronization changes. The installer normalizes the snapshot, compares it with the previous valid snapshot, and updates files atomically.
+
+## Check context freshness without changing it
+
+Run `python3 <resolved-installer-path> --check` to compare the loaded plugin version with `~/.clearskies/context-metadata.json` without MCP discovery or filesystem writes. A result of `missing`, `stale`, or `invalid` means setup should be rerun. Recommend the refresh; do not start it automatically during another task without the user's confirmation.
 
 ## Optional global loaders
 

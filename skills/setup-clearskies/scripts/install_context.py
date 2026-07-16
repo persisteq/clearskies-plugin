@@ -16,6 +16,7 @@ from typing import Any
 
 
 SCHEMA_VERSION = 1
+CONTEXT_METADATA_SCHEMA_VERSION = 1
 SOURCE = "clearskies-mcp"
 STANDARD_OBJECTS = {"account", "contact", "deal", "employee"}
 BEGIN_MARKER = "<!-- clearskies-context:begin -->"
@@ -39,6 +40,73 @@ FIELD_KEYS = {
 
 class SnapshotError(ValueError):
     pass
+
+
+def plugin_version() -> str:
+    plugin_root = Path(__file__).resolve().parents[3]
+    manifests = [
+        plugin_root / ".codex-plugin" / "plugin.json",
+        plugin_root / ".claude-plugin" / "plugin.json",
+    ]
+    versions: dict[str, str] = {}
+    for manifest in manifests:
+        if not manifest.is_file():
+            continue
+        try:
+            data = json.loads(manifest.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ValueError(f"could not read plugin manifest {manifest}: {exc}") from exc
+        version = data.get("version") if isinstance(data, dict) else None
+        if not isinstance(version, str) or not version.strip():
+            raise ValueError(f"plugin manifest {manifest} has no valid version")
+        versions[str(manifest)] = version.strip()
+
+    if not versions:
+        raise FileNotFoundError("no clearskies plugin manifest was found")
+    unique_versions = set(versions.values())
+    if len(unique_versions) != 1:
+        details = ", ".join(f"{path}={version}" for path, version in versions.items())
+        raise ValueError(f"clearskies plugin manifest versions do not match: {details}")
+    return unique_versions.pop()
+
+
+def context_status(home: Path) -> dict[str, Any]:
+    current_version = plugin_version()
+    metadata_path = home / ".clearskies" / "context-metadata.json"
+    result: dict[str, Any] = {
+        "status": "missing",
+        "pluginVersion": current_version,
+        "cachedPluginVersion": None,
+        "contextMetadata": str(metadata_path),
+    }
+    if not metadata_path.is_file():
+        return result
+
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        result["status"] = "invalid"
+        result["error"] = f"could not read context metadata: {exc}"
+        return result
+
+    if not isinstance(metadata, dict):
+        result["status"] = "invalid"
+        result["error"] = "context metadata must be a JSON object"
+        return result
+    cached_version = metadata.get("pluginVersion")
+    result["cachedPluginVersion"] = cached_version if isinstance(cached_version, str) else None
+    if (
+        metadata.get("schemaVersion") != CONTEXT_METADATA_SCHEMA_VERSION
+        or not isinstance(cached_version, str)
+        or not cached_version.strip()
+    ):
+        result["status"] = "invalid"
+        result["error"] = "context metadata has an unsupported schema or plugin version"
+        return result
+
+    result["cachedPluginVersion"] = cached_version.strip()
+    result["status"] = "current" if cached_version.strip() == current_version else "stale"
+    return result
 
 
 def _exact_keys(value: dict[str, Any], allowed: set[str], path: str) -> None:
@@ -339,6 +407,8 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
     snapshot = normalize_snapshot(incoming)
 
     context_dir = home / ".clearskies"
+    previous_context = context_status(home)
+    current_plugin_version = previous_context["pluginVersion"]
     snapshot_target = context_dir / "schema-snapshot.json"
     old_snapshot: dict[str, Any] | None = None
     if snapshot_target.exists():
@@ -358,8 +428,21 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
     default_guidelines = default_source.read_text(encoding="utf-8")
     profile = render_profile(snapshot)
     normalized_json = json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n"
+    context_metadata = (
+        json.dumps(
+            {
+                "schemaVersion": CONTEXT_METADATA_SCHEMA_VERSION,
+                "pluginVersion": current_plugin_version,
+                "generatedAt": snapshot["generatedAt"],
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
 
     contents = {
+        context_dir / "context-metadata.json": context_metadata,
         context_dir / "default-guidelines.md": default_guidelines,
         context_dir / "data-profile.md": profile,
         snapshot_target: normalized_json,
@@ -393,6 +476,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
 
     result = diff_snapshots(old_snapshot, snapshot)
     files = {
+        "contextMetadata": str(context_dir / "context-metadata.json"),
         "defaultGuidelines": str(context_dir / "default-guidelines.md"),
         "dataProfile": str(context_dir / "data-profile.md"),
         "schemaSnapshot": str(snapshot_target),
@@ -401,13 +485,21 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
         files["claudeLoader"] = str(claude_path)
         files["codexLoader"] = str(codex_path)
     result["files"] = files
+    result["context"] = {
+        "status": "current",
+        "pluginVersion": current_plugin_version,
+        "previousPluginVersion": previous_context["cachedPluginVersion"],
+        "versionChanged": previous_context["cachedPluginVersion"] != current_plugin_version,
+    }
     result["globalLoadersInstalled"] = install_global_loaders
     return result
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--snapshot-file", type=Path, required=True, help="Privacy-safe schema snapshot JSON")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--snapshot-file", type=Path, help="Privacy-safe schema snapshot JSON")
+    mode.add_argument("--check", action="store_true", help="Compare plugin and cached context versions")
     parser.add_argument(
         "--home",
         type=Path,
@@ -425,6 +517,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     try:
+        if args.check:
+            print(json.dumps(context_status(args.home.expanduser()), indent=2, ensure_ascii=False))
+            return 0
+        if args.snapshot_file is None:
+            raise ValueError("--snapshot-file is required unless --check is used")
         result = install(
             args.snapshot_file.expanduser(),
             args.home.expanduser(),

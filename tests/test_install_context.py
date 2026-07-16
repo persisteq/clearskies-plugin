@@ -11,6 +11,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills" / "setup-clearskies" / "scripts" / "install_context.py"
+CODEX_MANIFEST = ROOT / ".codex-plugin" / "plugin.json"
+CLAUDE_MANIFEST = ROOT / ".claude-plugin" / "plugin.json"
 
 
 def snapshot() -> dict:
@@ -59,6 +61,14 @@ class InstallContextTests(unittest.TestCase):
             text=True,
         )
 
+    def run_check(self, home: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, str(SCRIPT), "--home", str(home), "--check"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
     def test_first_run_creates_context_directory_only(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
@@ -68,7 +78,17 @@ class InstallContextTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             summary = json.loads(result.stdout)
             self.assertTrue(summary["firstRun"])
-            self.assertEqual(set(summary["files"]), {"defaultGuidelines", "dataProfile", "schemaSnapshot"})
+            self.assertEqual(
+                set(summary["files"]),
+                {"contextMetadata", "defaultGuidelines", "dataProfile", "schemaSnapshot"},
+            )
+            metadata = json.loads(
+                (home / ".clearskies" / "context-metadata.json").read_text(encoding="utf-8")
+            )
+            current_version = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))["version"]
+            self.assertEqual(metadata["pluginVersion"], current_version)
+            self.assertEqual(summary["context"]["pluginVersion"], current_version)
+            self.assertTrue(summary["context"]["versionChanged"])
             self.assertTrue((home / ".clearskies" / "schema-snapshot.json").is_file())
             self.assertTrue((home / ".clearskies" / "data-profile.md").is_file())
             self.assertFalse((home / ".claude").exists())
@@ -142,6 +162,40 @@ class InstallContextTests(unittest.TestCase):
             self.assertEqual(summary["objects"]["changed"], ["account"])
             self.assertEqual(summary["fields"]["changed"], ["account.019f-field-definition"])
             self.assertEqual(summary["fields"]["removed"], ["account.legacy-field"])
+            self.assertFalse(summary["context"]["versionChanged"])
+
+    def test_check_reports_missing_current_stale_and_invalid_context(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+
+            missing = self.run_check(home)
+            self.assertEqual(missing.returncode, 0, missing.stderr)
+            self.assertEqual(json.loads(missing.stdout)["status"], "missing")
+            self.assertFalse((home / ".clearskies").exists())
+
+            installed = self.run_installer(home, snapshot())
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+            current = self.run_check(home)
+            self.assertEqual(current.returncode, 0, current.stderr)
+            self.assertEqual(json.loads(current.stdout)["status"], "current")
+
+            metadata_path = home / ".clearskies" / "context-metadata.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata["pluginVersion"] = "0.0.0"
+            metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+            stale = self.run_check(home)
+            self.assertEqual(stale.returncode, 0, stale.stderr)
+            self.assertEqual(json.loads(stale.stdout)["status"], "stale")
+
+            metadata_path.write_text("not json", encoding="utf-8")
+            invalid = self.run_check(home)
+            self.assertEqual(invalid.returncode, 0, invalid.stderr)
+            self.assertEqual(json.loads(invalid.stdout)["status"], "invalid")
+
+    def test_host_plugin_manifest_versions_match(self) -> None:
+        codex_version = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))["version"]
+        claude_version = json.loads(CLAUDE_MANIFEST.read_text(encoding="utf-8"))["version"]
+        self.assertEqual(codex_version, claude_version)
 
     def test_global_loaders_require_opt_in_and_are_idempotent(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

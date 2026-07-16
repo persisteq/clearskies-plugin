@@ -9,9 +9,11 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 
 ## Load context
 
-1. Read `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md` when they exist.
-2. Otherwise read [references/default-guidelines.md](references/default-guidelines.md).
-3. Treat the data profile as a discovery aid, not proof that a record or event still exists. Query the MCP for current answers.
+1. Before trusting cached context, run the sibling `setup-clearskies/scripts/install_context.py --check` with Python when available. Resolve it inside the loaded plugin directory; in Claude Code it is `${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`.
+2. When the status is `current`, read `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md`.
+3. When the status is `missing`, `stale`, or `invalid`, disclose it and recommend `setup clearskies`. Do not run setup automatically during another task without confirmation. Use [references/default-guidelines.md](references/default-guidelines.md) and query current MCP schemas as needed until refreshed.
+4. If Python is unavailable, compare `pluginVersion` in `~/.clearskies/context-metadata.json` with the current host manifest's `version` in `.codex-plugin/plugin.json` or `.claude-plugin/plugin.json`; treat a missing or mismatched value as stale.
+5. Treat the data profile as a discovery aid, not proof that a record or event still exists. Query the MCP for current answers.
 
 ## Choose tools
 
