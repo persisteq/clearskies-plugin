@@ -121,6 +121,7 @@ Steps, Risks, or an onboarding status field.
 Setup creates a private clearskies profile on your computer:
 
 ```text
+~/.clearskies/context-metadata.json
 ~/.clearskies/default-guidelines.md
 ~/.clearskies/data-profile.md
 ~/.clearskies/schema-snapshot.json
@@ -133,6 +134,10 @@ instructions unless you explicitly request always-on context.
 The saved profile describes connected CRM objects and fields, including labels, field types,
 available filters, references, and editability. It does not contain CRM record values or customer
 interaction content. If setup cannot complete, the previous working profile remains unchanged.
+
+The context metadata records the plugin version that generated the cached files. Clearskies skills
+compare it with the installed plugin and recommend rerunning setup when the cache is missing, stale,
+or invalid. They do not silently rerun setup during another task.
 
 ## Working safely
 

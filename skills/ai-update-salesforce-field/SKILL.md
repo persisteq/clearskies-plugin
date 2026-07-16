@@ -33,9 +33,18 @@ skill and `workflow_capabilities_get`.
 
 ## Load connected-data context
 
-Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and
-`~/.clearskies/data-profile.md` when present. Continue with this skill's bundled
-guidance when they are absent. Treat the data profile as schema-routing metadata, not
+Before trusting cached context, run the sibling setup installer's `--check` mode with
+Python when available. In Claude Code, use
+`${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`; in Codex,
+resolve `../setup-clearskies/scripts/install_context.py` relative to this loaded skill
+directory. Read
+`~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md` only when the
+status is `current`. For `missing`, `stale`, or `invalid`, disclose the status, recommend
+`setup clearskies`, and read the current bundled
+`use-clearskies-revenue-data/references/default-guidelines.md` before continuing with MCP
+schema discovery. Do not run setup automatically during another task without confirmation.
+Without Python, compare `pluginVersion` in `~/.clearskies/context-metadata.json` with the
+current host manifest's `version`. Treat the data profile as schema-routing metadata, not
 current CRM record values.
 
 ## Operating rule
