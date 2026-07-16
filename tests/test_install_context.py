@@ -86,7 +86,13 @@ class InstallContextTests(unittest.TestCase):
             self.assertTrue(summary["firstRun"])
             self.assertEqual(
                 set(summary["files"]),
-                {"contextMetadata", "defaultGuidelines", "dataProfile", "schemaSnapshot"},
+                {
+                    "contextMetadata",
+                    "defaultGuidelines",
+                    "dataProfile",
+                    "dataProfileDirectory",
+                    "schemaSnapshot",
+                },
             )
             metadata = json.loads(
                 (home / ".clearskies" / "context-metadata.json").read_text(encoding="utf-8")
@@ -101,6 +107,8 @@ class InstallContextTests(unittest.TestCase):
             self.assertTrue(summary["context"]["versionChanged"])
             self.assertTrue((home / ".clearskies" / "schema-snapshot.json").is_file())
             self.assertTrue((home / ".clearskies" / "data-profile.md").is_file())
+            object_profiles = list((home / ".clearskies" / "data-profile").glob("object-*.md"))
+            self.assertEqual(len(object_profiles), 1)
             self.assertFalse((home / ".claude").exists())
             self.assertFalse((home / ".codex").exists())
 
@@ -119,10 +127,18 @@ class InstallContextTests(unittest.TestCase):
             self.assertTrue(summary["firstRun"])
             self.assertEqual(summary["objects"]["added"], ["account"])
             self.assertTrue((home / ".clearskies" / "default-guidelines.md").is_file())
-            profile = (home / ".clearskies" / "data-profile.md").read_text(encoding="utf-8")
+            index = (home / ".clearskies" / "data-profile.md").read_text(encoding="utf-8")
+            self.assertIn("Keep reads small", index)
+            self.assertIn("Account", index)
+            self.assertNotIn("Account Name", index)
+            profiles = list((home / ".clearskies" / "data-profile").glob("object-*.md"))
+            self.assertEqual(len(profiles), 1)
+            profile = profiles[0].read_text(encoding="utf-8")
             self.assertIn("Account Name", profile)
             self.assertIn("salesforce.Name", profile)
             self.assertIn("Customer", profile)
+            self.assertNotIn("Canonical ID", profile)
+            self.assertNotIn("validFilters", profile)
             self.assertEqual(summary["globalLoadersInstalled"], False)
             self.assertEqual(
                 (home / ".claude" / "CLAUDE.md").read_text(encoding="utf-8"), "# Existing Claude rule\n"
@@ -173,6 +189,11 @@ class InstallContextTests(unittest.TestCase):
             self.assertEqual(summary["fields"]["changed"], ["account.019f-field-definition"])
             self.assertEqual(summary["fields"]["removed"], ["account.legacy-field"])
             self.assertFalse(summary["context"]["versionChanged"])
+            profile_dir = home / ".clearskies" / "data-profile"
+            profile_names = {path.name for path in profile_dir.glob("object-*.md")}
+            self.assertEqual(len(profile_names), 2)
+            self.assertTrue(any("custom-project" in name for name in profile_names))
+            self.assertFalse(any("legacy-object" in name for name in profile_names))
 
     def test_refresh_migrates_previous_v1_snapshot(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -290,6 +311,53 @@ class InstallContextTests(unittest.TestCase):
             self.assertIn("sha256:<64 lowercase hex characters>", rejected.stderr)
             self.assertEqual(profile_path.read_text(encoding="utf-8"), original_profile)
 
+    def test_large_schema_emits_small_index_and_bounded_object_profiles(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            large = snapshot()
+            large["objects"] = []
+            object_types = ["account", "contact", "deal", "employee"] + [
+                f"Custom_Object_{index}__c" for index in range(8)
+            ]
+            for object_index, object_type in enumerate(object_types):
+                fields = []
+                for field_index in range(81):
+                    fields.append(
+                        {
+                            "id": f"field-{object_index}-{field_index}",
+                            "fieldId": f"salesforce.Field_{object_index}_{field_index}__c",
+                            "label": f"Field {object_index} {field_index}",
+                            "name": f"Field_{object_index}_{field_index}__c",
+                            "source": "salesforce",
+                            "dataType": "string",
+                            "validFilters": ["equal", "contains", "isEmpty", "isNotEmpty"],
+                            "enumValues": [f"Value {enum_index}" for enum_index in range(30)],
+                            "referenceToObj": None,
+                            "editable": True,
+                        }
+                    )
+                large["objects"].append(
+                    {
+                        "objectType": object_type,
+                        "label": "Opportunity" if object_type == "deal" else object_type,
+                        "kind": "standard" if object_type in {"account", "contact", "deal", "employee"} else "custom",
+                        "fields": fields,
+                    }
+                )
+
+            installed = self.run_installer(home, large)
+
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+            context_dir = home / ".clearskies"
+            index_path = context_dir / "data-profile.md"
+            profiles = list((context_dir / "data-profile").glob("object-*.md"))
+            self.assertEqual(len(large["objects"]), 12)
+            self.assertEqual(sum(len(item["fields"]) for item in large["objects"]), 972)
+            self.assertLess(index_path.stat().st_size, 16_000)
+            self.assertEqual(len(profiles), 12)
+            self.assertLess(max(path.stat().st_size for path in profiles), 64_000)
+            self.assertTrue(all("(+18 more)" in path.read_text(encoding="utf-8") for path in profiles))
+
     def test_host_plugin_manifest_versions_match(self) -> None:
         codex_version = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))["version"]
         claude_version = json.loads(CLAUDE_MANIFEST.read_text(encoding="utf-8"))["version"]
@@ -316,6 +384,8 @@ class InstallContextTests(unittest.TestCase):
             self.assertIn("Existing Codex rule", codex)
             self.assertIn("~/.clearskies/data-profile.md", claude)
             self.assertIn("~/.clearskies/data-profile.md", codex)
+            self.assertIn("small `~/.clearskies/data-profile.md` index", codex)
+            self.assertIn("only the linked object profile files", codex)
             self.assertEqual(claude.count("clearskies-context:begin"), 1)
             self.assertEqual(codex.count("clearskies-context:begin"), 1)
 
