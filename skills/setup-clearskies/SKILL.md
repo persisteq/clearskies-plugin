@@ -12,7 +12,7 @@ Discover the complete current CRM schema and install shared, rerunnable context 
 - Read metadata only. Do not fetch CRM record values, event contents, transcripts, or email bodies.
 - Complete all MCP discovery before invoking the installer. An authentication or discovery failure must leave the last valid files untouched.
 - Ask for filesystem approval when the host requires it for writes under the user's home directory.
-- Treat `~/.clearskies/context-metadata.json`, `default-guidelines.md`, `data-profile.md`, and `schema-snapshot.json` as plugin-managed files.
+- Treat `~/.clearskies/context-metadata.json`, `default-guidelines.md`, `data-profile.md`, `data-profile/`, and `schema-snapshot.json` as plugin-managed paths.
 - Do not modify `~/.claude/CLAUDE.md` or `~/.codex/AGENTS.md` by default.
 - Install global loader blocks only when the user explicitly asks for always-on clearskies context and confirms the global edits. Preserve all content outside the plugin-owned marker blocks.
 
@@ -86,11 +86,11 @@ python3 <resolved-installer-path> --snapshot-file <temporary-json-file>
    - whether a schema fingerprint was stored;
    - added, removed, or changed objects;
    - added, removed, or changed fields;
-   - the four files under `~/.clearskies`.
+   - the four root files plus the per-object profiles under `~/.clearskies/data-profile/`.
    Summarize the result in plain language. Do not expose installer internals unless troubleshooting.
 5. Delete the temporary snapshot when the environment permits it.
 
-If `python3` is unavailable, do not install a runtime. Before full discovery, compare the live fingerprint with `schemaFingerprint` in `~/.clearskies/context-metadata.json` and compare the cached `pluginVersion` with the current host manifest. Skip discovery only when both values match and the four managed files exist. Otherwise validate the exact snapshot shape above, prepare all four complete outputs in temporary files with the host's native file tools, compare the old and new snapshots, and replace the canonical files only after every discovery and preparation step succeeds. Set `context-metadata.json` to schema version `2`, the current host manifest's plugin version, the snapshot's `generatedAt`, and its `schemaFingerprint`. Leave any previous context intact on failure.
+If `python3` is unavailable, do not install a runtime. Before full discovery, compare the live fingerprint with `schemaFingerprint` in `~/.clearskies/context-metadata.json` and compare the cached `pluginVersion` with the current host manifest. Skip discovery only when both values match and every managed path exists. Otherwise validate the exact snapshot shape above, prepare the four root files and every per-object profile in temporary paths with the host's native file tools, compare the old and new snapshots, and replace the canonical paths only after every discovery and preparation step succeeds. Make `data-profile.md` a small object index and write one compact field-routing file per object under `data-profile/`; keep full field metadata only in `schema-snapshot.json`. Set `context-metadata.json` to schema version `2`, the current host manifest's plugin version, the snapshot's `generatedAt`, and its `schemaFingerprint`. Leave any previous context intact on failure.
 
 Rerun the entire workflow whenever synchronization changes. The installer normalizes the snapshot, compares it with the previous valid snapshot, and updates files atomically.
 

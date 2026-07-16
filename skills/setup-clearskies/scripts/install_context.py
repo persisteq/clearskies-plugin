@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -21,6 +22,8 @@ SOURCE = "clearskies-mcp"
 STANDARD_OBJECTS = {"account", "contact", "deal", "employee"}
 BEGIN_MARKER = "<!-- clearskies-context:begin -->"
 END_MARKER = "<!-- clearskies-context:end -->"
+ENUM_PREVIEW_LIMIT = 12
+GENERATED_PROFILE_GLOB = "object-*.md"
 
 TOP_LEVEL_KEYS = {"schemaVersion", "generatedAt", "source", "schemaFingerprint", "objects"}
 LEGACY_TOP_LEVEL_KEYS = {"schemaVersion", "generatedAt", "source", "objects"}
@@ -338,60 +341,89 @@ def _markdown(value: Any) -> str:
     return str(value).replace("|", "\\|").replace("\n", " ")
 
 
-def render_profile(snapshot: dict[str, Any]) -> str:
+def _profile_filename(object_type: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", object_type.casefold()).strip("-")[:48] or "object"
+    digest = hashlib.sha256(object_type.encode("utf-8")).hexdigest()[:10]
+    return f"object-{slug}-{digest}.md"
+
+
+def render_profile_index(
+    snapshot: dict[str, Any], profile_filenames: dict[str, str]
+) -> str:
     field_count = sum(len(item["fields"]) for item in snapshot["objects"])
     lines = [
         "# clearskies CRM data profile",
         "",
         "> Managed by the clearskies plugin. Rerun `setup clearskies` after CRM synchronization changes.",
         "> This file contains schema metadata only; it does not contain CRM values, transcripts, or email bodies.",
+        "> Keep reads small: use this index to open only the object profile(s) relevant to the question. Do not load every object profile or the full schema snapshot by default.",
         "",
         f"- Refreshed: `{snapshot['generatedAt']}`",
         f"- Objects: {len(snapshot['objects'])}",
         f"- Fields: {field_count}",
         "",
+        "| Object | Object type | Fields | Profile |",
+        "| --- | --- | ---: | --- |",
     ]
 
     if not snapshot["objects"]:
-        lines.extend(["No synchronized CRM object definitions were returned.", ""])
+        lines.extend(["| _No synchronized CRM object definitions were returned_ | — | 0 | — |", ""])
         return "\n".join(lines)
 
     for item in snapshot["objects"]:
-        lines.extend(
-            [
-                f"## {_markdown(item['label'])}",
-                "",
-                f"- Object type: `{_markdown(item['objectType'])}`",
-                f"- Kind: `{item['kind']}`",
-                "",
-                "| Field | Query field ID | Canonical ID | API/source name | Source | Data type | Filters | Enum values | Reference | Editable |",
-                "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-            ]
+        filename = profile_filenames[item["objectType"]]
+        lines.append(
+            f"| {_markdown(item['label'])} | `{_markdown(item['objectType'])}` | "
+            f"{len(item['fields'])} | [open](data-profile/{filename}) |"
         )
-        for field in item["fields"]:
-            filters = ", ".join(f"`{_markdown(value)}`" for value in field["validFilters"]) or "—"
-            enum_values = ", ".join(f"`{_markdown(value)}`" for value in field["enumValues"]) or "—"
-            lines.append(
-                "| "
-                + " | ".join(
-                    [
-                        _markdown(field["label"]),
-                        f"`{_markdown(field['fieldId'])}`",
-                        f"`{_markdown(field['id'])}`",
-                        _markdown(field["name"]),
-                        _markdown(field["source"]),
-                        f"`{_markdown(field['dataType'])}`",
-                        filters,
-                        enum_values,
-                        _markdown(field["referenceToObj"]),
-                        _markdown(field["editable"]),
-                    ]
-                )
-                + " |"
+    lines.extend(
+        [
+            "",
+            "Object profiles contain routing fields only. Use `schema-snapshot.json` or live `object_get_fields_schema` for canonical IDs, complete enum values, filters, editability, and source details.",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def render_object_profile(item: dict[str, Any], generated_at: str) -> str:
+    lines = [
+        f"# {_markdown(item['label'])}",
+        "",
+        "> Managed by the clearskies plugin. Load this file only when this object is relevant.",
+        "> This compact profile is for field discovery and routing. Query the live schema before filtering or writing, or inspect `../schema-snapshot.json` for full cached metadata.",
+        "",
+        f"- Object type: `{_markdown(item['objectType'])}`",
+        f"- Kind: `{item['kind']}`",
+        f"- Fields: {len(item['fields'])}",
+        f"- Refreshed: `{generated_at}`",
+        "",
+        "| Field | Query field ID | Type | Enum preview | Reference |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    for field in item["fields"]:
+        enum_values = field["enumValues"]
+        preview = ", ".join(
+            f"`{_markdown(value)}`" for value in enum_values[:ENUM_PREVIEW_LIMIT]
+        )
+        if len(enum_values) > ENUM_PREVIEW_LIMIT:
+            preview += f" (+{len(enum_values) - ENUM_PREVIEW_LIMIT} more)"
+        lines.append(
+            "| "
+            + " | ".join(
+                [
+                    _markdown(field["label"]),
+                    f"`{_markdown(field['fieldId'])}`",
+                    f"`{_markdown(field['dataType'])}`",
+                    preview or "—",
+                    _markdown(field["referenceToObj"]),
+                ]
             )
-        if not item["fields"]:
-            lines.append("| _No fields returned_ | — | — | — | — | — | — | — | — | — |")
-        lines.append("")
+            + " |"
+        )
+    if not item["fields"]:
+        lines.append("| _No fields returned_ | — | — | — | — |")
+    lines.append("")
     return "\n".join(lines)
 
 
@@ -428,19 +460,28 @@ def _stage(path: Path, content: bytes) -> tuple[Path, int]:
     return temporary, mode
 
 
-def transactional_write(contents: dict[Path, str]) -> None:
-    originals = {path: (path.read_bytes() if path.exists() else None) for path in contents}
-    modes = {path: (stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600) for path in contents}
+def transactional_write(contents: dict[Path, str], remove_paths: set[Path] | None = None) -> None:
+    remove_paths = remove_paths or set()
+    affected_paths = set(contents) | remove_paths
+    originals = {path: (path.read_bytes() if path.exists() else None) for path in affected_paths}
+    modes = {
+        path: (stat.S_IMODE(path.stat().st_mode) if path.exists() else 0o600)
+        for path in affected_paths
+    }
     staged: dict[Path, Path] = {}
-    replaced: list[Path] = []
+    changed: list[Path] = []
     try:
         for path, content in contents.items():
             staged[path] = _stage(path, content.encode("utf-8"))[0]
         for path, temporary in staged.items():
             os.replace(temporary, path)
-            replaced.append(path)
+            changed.append(path)
+        for path in sorted(remove_paths):
+            if path.exists():
+                path.unlink()
+                changed.append(path)
     except Exception:
-        for path in reversed(replaced):
+        for path in reversed(changed):
             original = originals[path]
             if original is None:
                 path.unlink(missing_ok=True)
@@ -484,7 +525,18 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
     if not default_source.is_file():
         raise FileNotFoundError(f"bundled default guidelines not found: {default_source}")
     default_guidelines = default_source.read_text(encoding="utf-8")
-    profile = render_profile(snapshot)
+    profile_filenames = {
+        item["objectType"]: _profile_filename(item["objectType"])
+        for item in snapshot["objects"]
+    }
+    profile_index = render_profile_index(snapshot, profile_filenames)
+    profile_dir = context_dir / "data-profile"
+    object_profiles = {
+        profile_dir / profile_filenames[item["objectType"]]: render_object_profile(
+            item, snapshot["generatedAt"]
+        )
+        for item in snapshot["objects"]
+    }
     normalized_json = json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n"
     context_metadata = (
         json.dumps(
@@ -503,8 +555,9 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
     contents = {
         context_dir / "context-metadata.json": context_metadata,
         context_dir / "default-guidelines.md": default_guidelines,
-        context_dir / "data-profile.md": profile,
+        context_dir / "data-profile.md": profile_index,
         snapshot_target: normalized_json,
+        **object_profiles,
     }
     claude_path = home / ".claude" / "CLAUDE.md"
     codex_path = home / ".codex" / "AGENTS.md"
@@ -524,20 +577,23 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
             [
                 BEGIN_MARKER,
                 "## clearskies context (managed by the clearskies plugin)",
-                "Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md`.",
+                "Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and the small `~/.clearskies/data-profile.md` index, then read only the linked object profile files relevant to the task.",
                 END_MARKER,
             ]
         )
         contents[claude_path] = _managed_content(claude_existing, claude_block)
         contents[codex_path] = _managed_content(codex_existing, codex_block)
 
-    transactional_write(contents)
+    generated_profile_paths = set(profile_dir.glob(GENERATED_PROFILE_GLOB)) if profile_dir.exists() else set()
+    stale_profile_paths = generated_profile_paths - set(object_profiles)
+    transactional_write(contents, stale_profile_paths)
 
     result = diff_snapshots(old_snapshot, snapshot)
     files = {
         "contextMetadata": str(context_dir / "context-metadata.json"),
         "defaultGuidelines": str(context_dir / "default-guidelines.md"),
         "dataProfile": str(context_dir / "data-profile.md"),
+        "dataProfileDirectory": str(profile_dir),
         "schemaSnapshot": str(snapshot_target),
     }
     if install_global_loaders:

@@ -125,6 +125,7 @@ Setup creates a private clearskies profile on your computer:
 ~/.clearskies/context-metadata.json
 ~/.clearskies/default-guidelines.md
 ~/.clearskies/data-profile.md
+~/.clearskies/data-profile/<object>.md
 ~/.clearskies/schema-snapshot.json
 ```
 
@@ -132,9 +133,12 @@ clearskies skills load this context only when you ask for clearskies work, so it
 unnecessary context to unrelated sessions. Setup does not change your global Claude or Codex
 instructions unless you explicitly request always-on context.
 
-The saved profile describes connected CRM objects and fields, including labels, field types,
-available filters, references, and editability. It does not contain CRM record values or customer
-interaction content. If setup cannot complete, the previous working profile remains unchanged.
+The small top-level profile indexes connected CRM objects. Each object has a compact routing file
+with field labels, query field IDs, types, enum previews, and references. Full cached metadata—such
+as canonical IDs, complete enums, valid filters, editability, and sources—stays in
+`schema-snapshot.json` and is loaded only when needed. None of these files contains CRM record values
+or customer interaction content. If setup cannot complete, the previous working profile remains
+unchanged.
 
 The context metadata records both the plugin version and the opaque CRM schema fingerprint that
 generated the cached files. Clearskies skills compare them with the installed plugin and live

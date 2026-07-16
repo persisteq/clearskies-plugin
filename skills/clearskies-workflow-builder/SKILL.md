@@ -31,8 +31,12 @@ Claude Code, use
 `${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`; in Codex,
 resolve `../setup-clearskies/scripts/install_context.py` relative to this loaded skill
 directory. Read
-`~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md` only when the
-status is `current` and the live fingerprint was compared. For `missing`, `stale`, or
+`~/.clearskies/default-guidelines.md` and the small `~/.clearskies/data-profile.md`
+index only when the status is `current` and the live fingerprint was compared. From the
+index, read only the object profile files relevant to the workflow; never load every
+object profile or `schema-snapshot.json` by default. If a selected file cannot be read,
+disclose the fallback and call `object_get_fields_schema` for that object instead of
+silently skipping discovery or broadly grepping the snapshot. For `missing`, `stale`, or
 `invalid`, disclose the status, recommend `setup clearskies`, and read the current bundled
 `use-clearskies-revenue-data/references/default-guidelines.md` before continuing with MCP
 schema discovery. Do not run setup automatically during another task without confirmation.
