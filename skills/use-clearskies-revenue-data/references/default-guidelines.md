@@ -5,6 +5,7 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 ## Discovery
 
 - Discover configured object types with `object_definitions_list` instead of assuming Salesforce, HubSpot, or a standard schema.
+- Compare `schemaStatus.fingerprint` from `object_definitions_list` with the full cached `schemaFingerprint` before trusting the saved data profile. Treat a mismatch as stale schema. Do not use `lastCheckedAt` for this comparison; it is a refresh timestamp, not a content version.
 - Inspect `object_get_fields_schema` before filtering. Use its query-facing `fieldId` and only the operators listed in each field's `validFilters`.
 - Treat `account`, `contact`, `deal`, and `employee` as standard objects with dedicated list tools. Query other returned object types with `crm_records_list`.
 - Treat the data profile in `~/.clearskies/data-profile.md` as routing metadata. Query the MCP for current values.

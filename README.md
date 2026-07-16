@@ -52,8 +52,9 @@ Setup learns how your connected CRM is organized so future research and workflow
 objects and fields. It stores schema details only—not CRM record values, transcripts, or email
 bodies.
 
-Run setup again whenever your team changes which CRM objects or fields are synchronized. Refreshes
-replace the previous profile only after discovery succeeds and report what changed.
+Run setup again whenever your team changes which CRM objects or fields are synchronized. Setup first
+compares the live schema fingerprint with the cached value, skips full field discovery when nothing
+changed, and replaces the previous profile only after a required refresh succeeds.
 
 If you prefer an explicit skill command, use:
 
@@ -135,9 +136,11 @@ The saved profile describes connected CRM objects and fields, including labels, 
 available filters, references, and editability. It does not contain CRM record values or customer
 interaction content. If setup cannot complete, the previous working profile remains unchanged.
 
-The context metadata records the plugin version that generated the cached files. Clearskies skills
-compare it with the installed plugin and recommend rerunning setup when the cache is missing, stale,
-or invalid. They do not silently rerun setup during another task.
+The context metadata records both the plugin version and the opaque CRM schema fingerprint that
+generated the cached files. Clearskies skills compare them with the installed plugin and live
+`object_definitions_list` response, then recommend rerunning setup when the cache is missing, stale,
+or invalid. The fingerprint covers query-relevant schema metadata, not CRM record values. Skills do
+not silently rerun setup during another task.
 
 ## Working safely
 
