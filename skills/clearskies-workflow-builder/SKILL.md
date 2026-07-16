@@ -24,10 +24,11 @@ so a workflow you ship actually does what the user asked.
 
 ## Load connected-data context
 
-Before trusting cached context, run the sibling
-`setup-clearskies/scripts/install_context.py --check` with Python when available. Resolve
-it inside the loaded plugin directory; in Claude Code it is
-`${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`. Read
+Before trusting cached context, run the sibling setup installer's `--check` mode with
+Python when available. In Claude Code, use
+`${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`; in Codex,
+resolve `../setup-clearskies/scripts/install_context.py` relative to this loaded skill
+directory. Read
 `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md` only when the
 status is `current`. For `missing`, `stale`, or `invalid`, disclose the status, recommend
 `setup clearskies`, and read the current bundled
