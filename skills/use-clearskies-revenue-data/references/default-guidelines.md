@@ -46,9 +46,9 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 - **Synthesis across content** (themes, feedback, or objections across calls or email): run multiple query angles with different phrasings; stop at saturation, when a new angle surfaces nothing new, not at a call budget.
 - **Audit or verification**: take an adversarial stance; re-derive numbers rather than trusting prior summaries or the data profile; follow anomalies where they lead instead of completing a fixed checklist.
 
-**Disclose rather than truncate.** Proportionality limits redundancy, never silently limits coverage. If you cap effort, state exactly what was not searched, such as "one semantic pass; narrower queries could surface more." Never present a bounded search as exhaustive.
+**Resolve cited entity IDs before attribution.** Event search results identify accounts, contacts, and employees by entity ID. Before finalizing an answer that attributes a quote or finding, batch the IDs you will cite by entity type and resolve them with the corresponding `accounts_list`, `contacts_list`, or `employees_list` `ids` filter. Request only the identity fields needed and set `itemsPerPage` to cover the batch when supported. Use one call per entity type when the cited IDs fit one page; follow cursors only when they do not. Do not substitute transcript handles for named people or companies when resolvable entity IDs are available.
 
-**Apply a cheap-completeness floor.** A single batched call—resolving entity IDs to names, fetching a final page, or running one cross-check aggregate—never counts against proportionality. Spend it rather than degrade attribution or verification.
+**Disclose rather than truncate.** Proportionality limits redundancy, never silently limits coverage. If you cap effort, state exactly what was not searched, such as "one semantic pass; narrower queries could surface more." Never present a bounded search as exhaustive.
 
 ## Answers and safety
 
