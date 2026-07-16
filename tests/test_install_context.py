@@ -17,9 +17,10 @@ CLAUDE_MANIFEST = ROOT / ".claude-plugin" / "plugin.json"
 
 def snapshot() -> dict:
     return {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "generatedAt": "2026-07-14T20:00:00Z",
         "source": "clearskies-mcp",
+        "schemaFingerprint": "sha256:" + "a" * 64,
         "objects": [
             {
                 "objectType": "account",
@@ -61,9 +62,14 @@ class InstallContextTests(unittest.TestCase):
             text=True,
         )
 
-    def run_check(self, home: Path) -> subprocess.CompletedProcess[str]:
+    def run_check(
+        self, home: Path, schema_fingerprint: str | None = None
+    ) -> subprocess.CompletedProcess[str]:
+        command = [sys.executable, str(SCRIPT), "--home", str(home), "--check"]
+        if schema_fingerprint is not None:
+            command.extend(["--schema-fingerprint", schema_fingerprint])
         return subprocess.run(
-            [sys.executable, str(SCRIPT), "--home", str(home), "--check"],
+            command,
             check=False,
             capture_output=True,
             text=True,
@@ -87,7 +93,11 @@ class InstallContextTests(unittest.TestCase):
             )
             current_version = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))["version"]
             self.assertEqual(metadata["pluginVersion"], current_version)
+            self.assertEqual(metadata["schemaFingerprint"], snapshot()["schemaFingerprint"])
             self.assertEqual(summary["context"]["pluginVersion"], current_version)
+            self.assertEqual(
+                summary["context"]["schemaFingerprint"], snapshot()["schemaFingerprint"]
+            )
             self.assertTrue(summary["context"]["versionChanged"])
             self.assertTrue((home / ".clearskies" / "schema-snapshot.json").is_file())
             self.assertTrue((home / ".clearskies" / "data-profile.md").is_file())
@@ -164,6 +174,42 @@ class InstallContextTests(unittest.TestCase):
             self.assertEqual(summary["fields"]["removed"], ["account.legacy-field"])
             self.assertFalse(summary["context"]["versionChanged"])
 
+    def test_refresh_migrates_previous_v1_snapshot(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            context_dir = home / ".clearskies"
+            context_dir.mkdir(parents=True)
+            legacy = snapshot()
+            legacy["schemaVersion"] = 1
+            legacy.pop("schemaFingerprint")
+            (context_dir / "schema-snapshot.json").write_text(
+                json.dumps(legacy), encoding="utf-8"
+            )
+            current_version = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))["version"]
+            (context_dir / "context-metadata.json").write_text(
+                json.dumps(
+                    {
+                        "schemaVersion": 1,
+                        "pluginVersion": current_version,
+                        "generatedAt": legacy["generatedAt"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            refreshed = self.run_installer(home, snapshot())
+
+            self.assertEqual(refreshed.returncode, 0, refreshed.stderr)
+            summary = json.loads(refreshed.stdout)
+            self.assertFalse(summary["firstRun"])
+            migrated_snapshot = json.loads(
+                (context_dir / "schema-snapshot.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(migrated_snapshot["schemaVersion"], 2)
+            self.assertEqual(
+                migrated_snapshot["schemaFingerprint"], snapshot()["schemaFingerprint"]
+            )
+
     def test_check_reports_missing_current_stale_and_invalid_context(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             home = Path(temporary)
@@ -191,6 +237,58 @@ class InstallContextTests(unittest.TestCase):
             invalid = self.run_check(home)
             self.assertEqual(invalid.returncode, 0, invalid.stderr)
             self.assertEqual(json.loads(invalid.stdout)["status"], "invalid")
+
+    def test_check_compares_live_schema_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            cached_fingerprint = snapshot()["schemaFingerprint"]
+            installed = self.run_installer(home, snapshot())
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+
+            matching = self.run_check(home, cached_fingerprint)
+            matching_status = json.loads(matching.stdout)
+            self.assertEqual(matching_status["status"], "current")
+            self.assertTrue(matching_status["fingerprintCompared"])
+
+            changed_fingerprint = "sha256:" + "b" * 64
+            changed = self.run_check(home, changed_fingerprint)
+            changed_status = json.loads(changed.stdout)
+            self.assertEqual(changed_status["status"], "stale")
+            self.assertEqual(changed_status["staleReason"], "schema-fingerprint")
+            self.assertEqual(changed_status["cachedSchemaFingerprint"], cached_fingerprint)
+            self.assertEqual(changed_status["liveSchemaFingerprint"], changed_fingerprint)
+
+    def test_check_treats_missing_cached_fingerprint_as_stale_when_live_value_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            installed = self.run_installer(home, snapshot())
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+
+            metadata_path = home / ".clearskies" / "context-metadata.json"
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            metadata["schemaFingerprint"] = None
+            metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
+
+            checked = self.run_check(home, snapshot()["schemaFingerprint"])
+            status = json.loads(checked.stdout)
+            self.assertEqual(status["status"], "stale")
+            self.assertEqual(status["staleReason"], "missing-schema-fingerprint")
+
+    def test_invalid_fingerprint_is_rejected_without_replacing_context(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            home = Path(temporary)
+            installed = self.run_installer(home, snapshot())
+            self.assertEqual(installed.returncode, 0, installed.stderr)
+            profile_path = home / ".clearskies" / "data-profile.md"
+            original_profile = profile_path.read_text(encoding="utf-8")
+
+            invalid = copy.deepcopy(snapshot())
+            invalid["schemaFingerprint"] = "not-a-fingerprint"
+            rejected = self.run_installer(home, invalid)
+
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("sha256:<64 lowercase hex characters>", rejected.stderr)
+            self.assertEqual(profile_path.read_text(encoding="utf-8"), original_profile)
 
     def test_host_plugin_manifest_versions_match(self) -> None:
         codex_version = json.loads(CODEX_MANIFEST.read_text(encoding="utf-8"))["version"]

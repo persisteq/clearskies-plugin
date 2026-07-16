@@ -15,14 +15,15 @@ from datetime import datetime, timezone
 from typing import Any
 
 
-SCHEMA_VERSION = 1
-CONTEXT_METADATA_SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
+CONTEXT_METADATA_SCHEMA_VERSION = 2
 SOURCE = "clearskies-mcp"
 STANDARD_OBJECTS = {"account", "contact", "deal", "employee"}
 BEGIN_MARKER = "<!-- clearskies-context:begin -->"
 END_MARKER = "<!-- clearskies-context:end -->"
 
-TOP_LEVEL_KEYS = {"schemaVersion", "generatedAt", "source", "objects"}
+TOP_LEVEL_KEYS = {"schemaVersion", "generatedAt", "source", "schemaFingerprint", "objects"}
+LEGACY_TOP_LEVEL_KEYS = {"schemaVersion", "generatedAt", "source", "objects"}
 OBJECT_KEYS = {"objectType", "label", "kind", "fields"}
 FIELD_KEYS = {
     "id",
@@ -70,13 +71,29 @@ def plugin_version() -> str:
     return unique_versions.pop()
 
 
-def context_status(home: Path) -> dict[str, Any]:
+def _schema_fingerprint(value: Any, path: str, *, nullable: bool = False) -> str | None:
+    if value is None and nullable:
+        return None
+    fingerprint = _string(value, path)
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", fingerprint):
+        raise SnapshotError(f"{path} must use the format sha256:<64 lowercase hex characters>")
+    return fingerprint
+
+
+def context_status(home: Path, live_schema_fingerprint: str | None = None) -> dict[str, Any]:
     current_version = plugin_version()
+    if live_schema_fingerprint is not None:
+        live_schema_fingerprint = _schema_fingerprint(
+            live_schema_fingerprint, "live schema fingerprint"
+        )
     metadata_path = home / ".clearskies" / "context-metadata.json"
     result: dict[str, Any] = {
         "status": "missing",
         "pluginVersion": current_version,
         "cachedPluginVersion": None,
+        "cachedSchemaFingerprint": None,
+        "liveSchemaFingerprint": live_schema_fingerprint,
+        "fingerprintCompared": live_schema_fingerprint is not None,
         "contextMetadata": str(metadata_path),
     }
     if not metadata_path.is_file():
@@ -95,8 +112,19 @@ def context_status(home: Path) -> dict[str, Any]:
         return result
     cached_version = metadata.get("pluginVersion")
     result["cachedPluginVersion"] = cached_version if isinstance(cached_version, str) else None
+    cached_fingerprint = metadata.get("schemaFingerprint")
+    try:
+        cached_fingerprint = _schema_fingerprint(
+            cached_fingerprint, "context metadata schemaFingerprint", nullable=True
+        )
+    except SnapshotError as exc:
+        result["status"] = "invalid"
+        result["error"] = str(exc)
+        return result
+    result["cachedSchemaFingerprint"] = cached_fingerprint
     if (
         metadata.get("schemaVersion") != CONTEXT_METADATA_SCHEMA_VERSION
+        or "schemaFingerprint" not in metadata
         or not isinstance(cached_version, str)
         or not cached_version.strip()
     ):
@@ -105,7 +133,17 @@ def context_status(home: Path) -> dict[str, Any]:
         return result
 
     result["cachedPluginVersion"] = cached_version.strip()
-    result["status"] = "current" if cached_version.strip() == current_version else "stale"
+    if cached_version.strip() != current_version:
+        result["status"] = "stale"
+        result["staleReason"] = "plugin-version"
+    elif live_schema_fingerprint is not None and cached_fingerprint is None:
+        result["status"] = "stale"
+        result["staleReason"] = "missing-schema-fingerprint"
+    elif live_schema_fingerprint is not None and cached_fingerprint != live_schema_fingerprint:
+        result["status"] = "stale"
+        result["staleReason"] = "schema-fingerprint"
+    else:
+        result["status"] = "current"
     return result
 
 
@@ -144,6 +182,9 @@ def normalize_snapshot(raw: Any) -> dict[str, Any]:
         raise SnapshotError(f"schemaVersion must be {SCHEMA_VERSION}")
     if raw["source"] != SOURCE:
         raise SnapshotError(f"source must be {SOURCE!r}")
+    schema_fingerprint = _schema_fingerprint(
+        raw["schemaFingerprint"], "schemaFingerprint", nullable=True
+    )
     if not isinstance(raw["objects"], list):
         raise SnapshotError("objects must be an array")
 
@@ -227,8 +268,22 @@ def normalize_snapshot(raw: Any) -> dict[str, Any]:
         "schemaVersion": SCHEMA_VERSION,
         "generatedAt": _timestamp(raw["generatedAt"]),
         "source": SOURCE,
+        "schemaFingerprint": schema_fingerprint,
         "objects": objects,
     }
+
+
+def normalize_existing_snapshot(raw: Any, replacement_fingerprint: str | None) -> dict[str, Any]:
+    """Normalize current snapshots and migrate the previous v1 shape for diffing."""
+    if (
+        isinstance(raw, dict)
+        and raw.get("schemaVersion") == 1
+        and set(raw) == LEGACY_TOP_LEVEL_KEYS
+    ):
+        raw = dict(raw)
+        raw["schemaVersion"] = SCHEMA_VERSION
+        raw["schemaFingerprint"] = replacement_fingerprint
+    return normalize_snapshot(raw)
 
 
 def _map_objects(snapshot: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -413,7 +468,10 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
     old_snapshot: dict[str, Any] | None = None
     if snapshot_target.exists():
         try:
-            old_snapshot = normalize_snapshot(json.loads(snapshot_target.read_text(encoding="utf-8")))
+            old_snapshot = normalize_existing_snapshot(
+                json.loads(snapshot_target.read_text(encoding="utf-8")),
+                snapshot["schemaFingerprint"],
+            )
         except (OSError, json.JSONDecodeError, SnapshotError) as exc:
             raise SnapshotError(f"existing schema snapshot is invalid; no files were changed: {exc}") from exc
 
@@ -434,6 +492,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
                 "schemaVersion": CONTEXT_METADATA_SCHEMA_VERSION,
                 "pluginVersion": current_plugin_version,
                 "generatedAt": snapshot["generatedAt"],
+                "schemaFingerprint": snapshot["schemaFingerprint"],
             },
             indent=2,
             ensure_ascii=False,
@@ -490,6 +549,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
         "pluginVersion": current_plugin_version,
         "previousPluginVersion": previous_context["cachedPluginVersion"],
         "versionChanged": previous_context["cachedPluginVersion"] != current_plugin_version,
+        "schemaFingerprint": snapshot["schemaFingerprint"],
     }
     result["globalLoadersInstalled"] = install_global_loaders
     return result
@@ -499,7 +559,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--snapshot-file", type=Path, help="Privacy-safe schema snapshot JSON")
-    mode.add_argument("--check", action="store_true", help="Compare plugin and cached context versions")
+    mode.add_argument("--check", action="store_true", help="Check cached plugin and schema freshness")
+    parser.add_argument(
+        "--schema-fingerprint",
+        help="Live schemaStatus.fingerprint from object_definitions_list (use with --check)",
+    )
     parser.add_argument(
         "--home",
         type=Path,
@@ -518,8 +582,16 @@ def main() -> int:
     args = parse_args()
     try:
         if args.check:
-            print(json.dumps(context_status(args.home.expanduser()), indent=2, ensure_ascii=False))
+            print(
+                json.dumps(
+                    context_status(args.home.expanduser(), args.schema_fingerprint),
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
             return 0
+        if args.schema_fingerprint is not None:
+            raise ValueError("--schema-fingerprint may only be used with --check")
         if args.snapshot_file is None:
             raise ValueError("--snapshot-file is required unless --check is used")
         result = install(

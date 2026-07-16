@@ -9,11 +9,13 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 
 ## Load context
 
-1. Before trusting cached context, run the sibling setup installer's `--check` mode with Python when available. In Claude Code, use `${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`; in Codex, resolve `../setup-clearskies/scripts/install_context.py` relative to this loaded skill directory.
-2. When the status is `current`, read `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md`.
-3. When the status is `missing`, `stale`, or `invalid`, disclose it and recommend `setup clearskies`. Do not run setup automatically during another task without confirmation. Use [references/default-guidelines.md](references/default-guidelines.md) and query current MCP schemas as needed until refreshed.
-4. If Python is unavailable, compare `pluginVersion` in `~/.clearskies/context-metadata.json` with the current host manifest's `version` in `.codex-plugin/plugin.json` or `.claude-plugin/plugin.json`; treat a missing or mismatched value as stale.
-5. Treat the data profile as a discovery aid, not proof that a record or event still exists. Query the MCP for current answers.
+1. Call `object_definitions_list` before trusting cached context. When `schemaStatus.fingerprint` is present, keep the full opaque value exactly as returned; do not substitute `lastCheckedAt`, which is a refresh timestamp rather than a schema-content version.
+2. Resolve the sibling setup installer. In Claude Code, use `${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`; in Codex, resolve `../setup-clearskies/scripts/install_context.py` relative to this loaded skill directory.
+3. With Python available, run `python3 <resolved-installer-path> --check --schema-fingerprint <live-fingerprint>`. When `schemaStatus` is omitted, run `--check` without the fingerprint and treat live schema freshness as unknown.
+4. When the status is `current` and the live fingerprint was compared, read `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md`.
+5. When the status is `missing`, `stale`, or `invalid`, disclose it and recommend `setup clearskies`. A fingerprint mismatch means the connected CRM schema changed. Do not run setup automatically during another task without confirmation. Use [references/default-guidelines.md](references/default-guidelines.md) and query current MCP schemas as needed until refreshed.
+6. If Python is unavailable, compare both the live fingerprint with `schemaFingerprint` in `~/.clearskies/context-metadata.json` and the cached `pluginVersion` with the current host manifest's version. Treat a missing or mismatched value as stale.
+7. If no live fingerprint is available, use the cached profile only as routing guidance and query current schemas for relevant objects or fields. Treat the data profile as a discovery aid, not proof that a record or event still exists. Query the MCP for current answers.
 
 ## Choose tools
 

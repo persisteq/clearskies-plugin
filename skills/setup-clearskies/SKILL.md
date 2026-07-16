@@ -19,14 +19,22 @@ Discover the complete current CRM schema and install shared, rerunnable context 
 ## Discover the schema
 
 1. Call `object_definitions_list`. If the connector is unavailable or unauthenticated, stop and explain how to connect it.
-2. For every returned `objectType`, call `object_get_fields_schema`. Do not omit empty, custom, or unfamiliar objects.
-3. Build one JSON snapshot using only this shape:
+2. Read `schemaStatus.fingerprint` from the response. Treat it as a version for the complete query-relevant CRM schema, not as record data or a timestamp:
+   - Compare the full opaque value exactly; never parse, shorten, or recompute it.
+   - Do not use `lastCheckedAt` to decide whether schema content changed. It records the latest successful schema refresh, while only the fingerprint represents content.
+   - If the server omits `schemaStatus`, freshness is unknown. Continue with full discovery and store `null`; do not invent a fingerprint.
+3. Before fetching every field, resolve the installer path below and, when both a live fingerprint and cached context exist, run `python3 <resolved-installer-path> --check --schema-fingerprint <live-fingerprint>`.
+   - If the result is `current`, stop: the plugin version and query-relevant CRM schema both match the cache. Report `clearskies context is current`; do not call `object_get_fields_schema` or rewrite the cached files.
+   - If the result is `missing`, `stale`, or `invalid`, continue with full discovery. A `staleReason` of `schema-fingerprint` means the connected schema changed; `plugin-version` means the installed guidance changed; `missing-schema-fingerprint` means the cache predates fingerprint tracking.
+4. For every returned `objectType`, call `object_get_fields_schema`. Do not omit empty, custom, or unfamiliar objects.
+5. Build one JSON snapshot using only this shape:
 
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "generatedAt": "2026-07-14T20:00:00Z",
   "source": "clearskies-mcp",
+  "schemaFingerprint": "sha256:7682ed30b4bc4570062a8bd19e5688d9602d0a161995435e9fad82ad4341de9f",
   "objects": [
     {
       "objectType": "account",
@@ -51,6 +59,7 @@ Discover the complete current CRM schema and install shared, rerunnable context 
 }
 ```
 
+- Copy `schemaStatus.fingerprint` to `schemaFingerprint`; set it to `null` only when `object_definitions_list` omitted `schemaStatus`.
 - Set `kind` to `standard` only for `account`, `contact`, `deal`, or `employee`; otherwise use `custom`.
 - Copy `id` as the canonical field-definition UUID and `fieldId` as the query-facing field key. Do not substitute one for the other.
 - Map the MCP response's `type` to `dataType`; use `unknown` only when no type is exposed.
@@ -74,19 +83,22 @@ python3 <resolved-installer-path> --snapshot-file <temporary-json-file>
    - a clear success message: `clearskies is ready` on first setup or `clearskies context refreshed` on later runs;
    - whether this was the first setup;
    - the current plugin version and whether the cached version changed;
+   - whether a schema fingerprint was stored;
    - added, removed, or changed objects;
    - added, removed, or changed fields;
    - the four files under `~/.clearskies`.
    Summarize the result in plain language. Do not expose installer internals unless troubleshooting.
 5. Delete the temporary snapshot when the environment permits it.
 
-If `python3` is unavailable, do not install a runtime. Validate the exact snapshot shape above, prepare all four complete outputs in temporary files with the host's native file tools, compare the old and new snapshots, and replace the canonical files only after every discovery and preparation step succeeds. Set `context-metadata.json` to schema version `1`, the current host manifest's plugin version, and the snapshot's `generatedAt`. Leave any previous context intact on failure.
+If `python3` is unavailable, do not install a runtime. Before full discovery, compare the live fingerprint with `schemaFingerprint` in `~/.clearskies/context-metadata.json` and compare the cached `pluginVersion` with the current host manifest. Skip discovery only when both values match and the four managed files exist. Otherwise validate the exact snapshot shape above, prepare all four complete outputs in temporary files with the host's native file tools, compare the old and new snapshots, and replace the canonical files only after every discovery and preparation step succeeds. Set `context-metadata.json` to schema version `2`, the current host manifest's plugin version, the snapshot's `generatedAt`, and its `schemaFingerprint`. Leave any previous context intact on failure.
 
 Rerun the entire workflow whenever synchronization changes. The installer normalizes the snapshot, compares it with the previous valid snapshot, and updates files atomically.
 
 ## Check context freshness without changing it
 
-Run `python3 <resolved-installer-path> --check` to compare the loaded plugin version with `~/.clearskies/context-metadata.json` without MCP discovery or filesystem writes. A result of `missing`, `stale`, or `invalid` means setup should be rerun. Recommend the refresh; do not start it automatically during another task without the user's confirmation.
+Call `object_definitions_list`, then run `python3 <resolved-installer-path> --check --schema-fingerprint <schemaStatus.fingerprint>` to compare both the loaded plugin version and live query-relevant CRM schema with `~/.clearskies/context-metadata.json` without filesystem writes. A result of `missing`, `stale`, or `invalid` means setup should be rerun. Recommend the refresh; do not start it automatically during another task without the user's confirmation.
+
+If `object_definitions_list` omits `schemaStatus`, run `--check` without `--schema-fingerprint` to validate the local plugin/cache contract, but report that live schema freshness is unknown. Treat the cached profile only as routing guidance and query the relevant current field schemas before relying on them.
 
 ## Optional global loaders
 

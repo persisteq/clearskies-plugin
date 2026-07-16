@@ -33,19 +33,24 @@ skill and `workflow_capabilities_get`.
 
 ## Load connected-data context
 
-Before trusting cached context, run the sibling setup installer's `--check` mode with
-Python when available. In Claude Code, use
+Before trusting cached context, call `object_definitions_list` and retain the exact
+`schemaStatus.fingerprint` when present. Run the sibling setup installer's
+`--check --schema-fingerprint <live-fingerprint>` mode with Python when available. In
+Claude Code, use
 `${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`; in Codex,
 resolve `../setup-clearskies/scripts/install_context.py` relative to this loaded skill
 directory. Read
 `~/.clearskies/default-guidelines.md` and `~/.clearskies/data-profile.md` only when the
-status is `current`. For `missing`, `stale`, or `invalid`, disclose the status, recommend
-`setup clearskies`, and read the current bundled
+status is `current` and the live fingerprint was compared. For `missing`, `stale`, or
+`invalid`, disclose the status, recommend `setup clearskies`, and read the current bundled
 `use-clearskies-revenue-data/references/default-guidelines.md` before continuing with MCP
 schema discovery. Do not run setup automatically during another task without confirmation.
-Without Python, compare `pluginVersion` in `~/.clearskies/context-metadata.json` with the
-current host manifest's `version`. Treat the data profile as schema-routing metadata, not
-current CRM record values.
+Without Python, compare both the live fingerprint with `schemaFingerprint` in
+`~/.clearskies/context-metadata.json` and the cached `pluginVersion` with the current host
+manifest's `version`. If `schemaStatus` is omitted, live freshness is unknown: use the
+profile only as routing guidance and query relevant current schemas. Never use
+`lastCheckedAt` as a schema-content version. Treat the data profile as schema-routing
+metadata, not current CRM record values.
 
 ## Operating rule
 
