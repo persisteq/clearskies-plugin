@@ -39,7 +39,7 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 6. For event periods, apply RFC3339 UTC `startTime` and `endTime`; set `endTime` to now for “recent” or “latest” past activity so future events are excluded.
 7. Follow cursors when the answer may span more than one page. Do not claim completeness from a truncated page.
 8. Widen a date range only after the requested range returns nothing, and state that the range was widened.
-9. Keep reads proportional. Fetch full event contents only for the events used in the answer.
+9. Fetch full event contents only for the events used in the answer.
 10. For call or transcript requests, inspect the `event` schema before the first `events_list` call when event field filters are needed. Start with explicit time bounds and `internal.type = meeting`. When the recording provider is known, use the top-level `provider` filter to exclude calendar-only meetings. A provider-linked call does not guarantee a transcript: select relevant event IDs, call `events_get_contents`, and verify transcript content before using it. Do not begin with a broad, unfiltered calendar page.
 
 ## Synthesize evidence

@@ -39,6 +39,17 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 - If the requested period is empty, widen it only when useful and disclose the wider period.
 - When exposed, use `support_tickets_list` and `github_activities_list` for focused ticket or engineering-activity queries.
 
+## Match investigation effort to the question type
+
+- **Lookup** (one fact or record): use minimum calls; stop once confirmed.
+- **Metric or report** (counts, sums, or breakdowns): aggregate first; reconcile totals two independent ways before reporting.
+- **Synthesis across content** (themes, feedback, or objections across calls or email): run multiple query angles with different phrasings; stop at saturation, when a new angle surfaces nothing new, not at a call budget.
+- **Audit or verification**: take an adversarial stance; re-derive numbers rather than trusting prior summaries or the data profile; follow anomalies where they lead instead of completing a fixed checklist.
+
+**Disclose rather than truncate.** Proportionality limits redundancy, never silently limits coverage. If you cap effort, state exactly what was not searched, such as "one semantic pass; narrower queries could surface more." Never present a bounded search as exhaustive.
+
+**Apply a cheap-completeness floor.** A single batched call—resolving entity IDs to names, fetching a final page, or running one cross-check aggregate—never counts against proportionality. Spend it rather than degrade attribution or verification.
+
 ## Answers and safety
 
 - Combine CRM state with dated call or email evidence when it materially improves the answer.
