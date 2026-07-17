@@ -125,7 +125,6 @@ Setup creates a private clearskies profile on your computer:
 ~/.clearskies/context-metadata.json
 ~/.clearskies/default-guidelines.md
 ~/.clearskies/data-profile.md
-~/.clearskies/data-profile/<object>.md
 ~/.clearskies/schema-snapshot.json
 ```
 
@@ -141,10 +140,8 @@ record queries still require the live MCP. None of these files contains CRM reco
 customer interaction content. If setup cannot complete, the previous files remain unchanged.
 
 The context metadata records both the plugin version and the opaque CRM schema fingerprint that
-generated the cached files. Clearskies skills compare them with the installed plugin and live
-`object_definitions_list` response, then recommend rerunning setup when the cache is missing, stale,
-or invalid. The fingerprint covers query-relevant schema metadata, not CRM record values. Skills do
-not silently rerun setup during another task.
+generated the legacy files. The fingerprint covers query-relevant schema metadata, not CRM record
+values.
 
 ## Working safely
 
