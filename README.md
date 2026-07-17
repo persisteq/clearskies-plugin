@@ -132,9 +132,9 @@ clearskies skills load this context only when you ask for clearskies work, so it
 unnecessary context to unrelated sessions. Setup does not change your global Claude or Codex
 instructions unless you explicitly request always-on context.
 
-When the MCP exposes `schema_search`, clearskies skills use it as the primary live discovery path,
-then call `object_get_fields_schema` for authoritative filters, enums, canonical IDs, and write
-metadata. Normal tasks do not load the saved schema profile or snapshot. Those files remain for
+Clearskies skills use `schema_search` as the primary live discovery path, then call
+`object_get_fields_schema` for authoritative filters, enums, canonical IDs, and write metadata.
+Normal tasks do not load the saved schema profile or snapshot. Those files remain for
 backward compatibility and manual inspection, but they are not an offline execution path because
 record queries still require the live MCP. None of these files contains CRM record values or
 customer interaction content. If setup cannot complete, the previous files remain unchanged.

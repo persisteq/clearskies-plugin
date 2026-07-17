@@ -9,16 +9,16 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 
 ## Load context
 
-1. When `schema_search` is exposed, call it first with the user's business concept and a modest page size. Use its ranked results to select candidate objects and fields. Keep a cursor only with the same query and filters, disclose any warnings, and never treat bounded search results as proof that no other relevant field exists.
-2. If `schema_search` is unavailable, use `object_definitions_list` to discover configured objects. This is a live-tool fallback, not a reason to load cached profiles.
+1. Call `schema_search` first with the user's business concept and a modest page size. Use its ranked results to select candidate objects and fields. Keep a cursor only with the same query and filters, disclose any warnings, and never treat bounded search results as proof that no other relevant field exists.
+2. Use `object_definitions_list` only when the task requires a complete list of configured objects. Do not use it as a substitute for field search.
 3. Call `object_get_fields_schema` for every selected object before filtering, aggregating, or writing. Its response is authoritative for query field IDs, valid operators, enum values, relationships, and write metadata.
 4. For audits or verification, use search only to select primary and related objects, then enumerate the complete live schema for each selected object with `object_get_fields_schema`.
 5. Do not read `~/.clearskies/data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal task execution. They are legacy setup artifacts, not a substitute for live schema discovery.
 
 ## Choose tools
 
-- Use `schema_search` for bounded, cross-object field discovery when exposed. Search is for routing, not exhaustive audit coverage.
-- Use `object_definitions_list` when `schema_search` is unavailable or when a complete list of configured CRM object types is needed.
+- Use `schema_search` for bounded, cross-object field discovery. Search is for routing, not exhaustive audit coverage.
+- Use `object_definitions_list` only when a complete list of configured CRM object types is needed.
 - Use `object_get_fields_schema` before filtering an unfamiliar object or field. Pass its query-facing `fieldId` and only operators returned in `validFilters`.
 - Use `accounts_list`, `contacts_list`, `deals_list`, and `employees_list` for the standard objects.
 - Use `account_get_contacts` and `account_get_deals` after identifying an account.

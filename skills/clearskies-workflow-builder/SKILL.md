@@ -24,17 +24,14 @@ so a workflow you ship actually does what the user asked.
 
 ## Load connected-data context
 
-When object or field discovery is needed and `schema_search` is exposed, call it first
-with the workflow's business concept. Use the ranked results only to select candidates;
-keep pagination cursors with the same query and filters, disclose warnings, and call
+When object or field discovery is needed, call `schema_search` first with the workflow's
+business concept. Use the ranked results only to select candidates; keep pagination
+cursors with the same query and filters, disclose warnings, and call
 `object_get_fields_schema` for each selected object before authoring filters or writes.
-Search is not exhaustive audit coverage.
-
-If `schema_search` is unavailable, call `object_definitions_list` to discover configured
-objects. This is the live fallback; do not load `data-profile.md`, per-object profiles, or
-`schema-snapshot.json` during normal workflow authoring. For audits, enumerate every
-field on each selected and related object with `object_get_fields_schema` rather than
-treating search results as exhaustive.
+Use `object_definitions_list` only when a complete configured object list is required. Do
+not load `data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal
+workflow authoring. For audits, enumerate every field on each selected and related object
+with `object_get_fields_schema` rather than treating search results as exhaustive.
 
 ## The golden rule
 

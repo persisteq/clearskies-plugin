@@ -4,8 +4,8 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 
 ## Discovery
 
-- When exposed, use `schema_search` first to find likely objects and fields across standard, custom, and activity schemas. Keep pagination cursors with the same query and filters, disclose warnings, and never treat bounded search results as exhaustive.
-- Use `object_definitions_list` when `schema_search` is unavailable or when a complete configured CRM object list is needed. Do not assume Salesforce, HubSpot, or a standard schema.
+- Use `schema_search` first to find likely objects and fields across standard, custom, and activity schemas. Keep pagination cursors with the same query and filters, disclose warnings, and never treat bounded search results as exhaustive.
+- Use `object_definitions_list` only when a complete configured CRM object list is needed. Do not assume Salesforce, HubSpot, or a standard schema.
 - Inspect `object_get_fields_schema` before filtering. Use its query-facing `fieldId` and only the operators listed in each field's `validFilters`.
 - Treat `account`, `contact`, `deal`, and `employee` as standard objects with dedicated list tools. Query other returned object types with `crm_records_list`.
 - Do not load `~/.clearskies/data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal tasks. Use live schema tools instead.
@@ -47,7 +47,7 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 - **Synthesis across content** (themes, feedback, or objections across calls or email): run multiple query angles with different phrasings; stop at saturation, when a new angle surfaces nothing new, not at a call budget.
 - **Audit or verification**: take an adversarial stance; re-derive numbers rather than trusting prior summaries or the data profile; follow anomalies where they lead instead of completing a fixed checklist.
 
-**Audit the full relevant object schemas.** Use `schema_search` to identify primary and related objects, then call `object_get_fields_schema` and inspect every field on each selected object once. Search ranking is not exhaustive proof that a field does or does not exist. If search is unavailable, use `object_definitions_list` to select objects and inspect their complete live schemas. Consider indirect eligibility, suppression, lifecycle, status, and quality signals before selecting checks.
+**Audit the full relevant object schemas.** Use `schema_search` to identify primary and related objects, then call `object_get_fields_schema` and inspect every field on each selected object once. Search ranking is not exhaustive proof that a field does or does not exist. Consider indirect eligibility, suppression, lifecycle, status, and quality signals before selecting checks.
 
 **Validate derived fields before aggregating them.** Before treating a stored duration, age, score, rollup, or other derived field as authoritative, check its population coverage and compare it with its source fields on raw records that include null, typical, and extreme values. If it is sparse, contradictory, or contains impossible values, compute the metric from source fields over the complete in-scope row set when feasible. Otherwise disclose the bound and do not present the result as exact. A correct row-derived answer is better than a fast aggregate of a broken field.
 
