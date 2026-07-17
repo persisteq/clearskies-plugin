@@ -9,23 +9,22 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 
 ## Load context
 
-1. Call `object_definitions_list` before trusting cached context. When `schemaStatus.fingerprint` is present, keep the full opaque value exactly as returned; do not substitute `lastCheckedAt`, which is a refresh timestamp rather than a schema-content version.
-2. Resolve the sibling setup installer. In Claude Code, use `${CLAUDE_PLUGIN_ROOT}/skills/setup-clearskies/scripts/install_context.py`; in Codex, resolve `../setup-clearskies/scripts/install_context.py` relative to this loaded skill directory.
-3. With Python available, run `python3 <resolved-installer-path> --check --schema-fingerprint <live-fingerprint>`. When `schemaStatus` is omitted, run `--check` without the fingerprint and treat live schema freshness as unknown.
-4. When the status is `current` and the live fingerprint was compared, read `~/.clearskies/default-guidelines.md` and the small `~/.clearskies/data-profile.md` index. From the index, read only the per-object profile files relevant to the question. Never read every object profile or `schema-snapshot.json` by default. If a selected object profile cannot be read, disclose that fallback and call `object_get_fields_schema` for that object; do not silently skip schema discovery or improvise broad grep/jq scans.
-5. When the status is `missing`, `stale`, or `invalid`, disclose it and recommend `setup clearskies`. A fingerprint mismatch means the connected CRM schema changed. Do not run setup automatically during another task without confirmation. Use [references/default-guidelines.md](references/default-guidelines.md) and query current MCP schemas as needed until refreshed.
-6. If Python is unavailable, compare both the live fingerprint with `schemaFingerprint` in `~/.clearskies/context-metadata.json` and the cached `pluginVersion` with the current host manifest's version. Treat a missing or mismatched value as stale.
-7. If no live fingerprint is available, use the indexed per-object profiles only as routing guidance and query current schemas for relevant objects or fields. Treat a profile as a discovery aid, not proof that a record or event still exists. Query the MCP for current answers.
+1. When `schema_search` is exposed, call it first with the user's business concept and a modest page size. Use its ranked results to select candidate objects and fields. Keep a cursor only with the same query and filters, disclose any warnings, and never treat bounded search results as proof that no other relevant field exists.
+2. If `schema_search` is unavailable, use `object_definitions_list` to discover configured objects. This is a live-tool fallback, not a reason to load cached profiles.
+3. Call `object_get_fields_schema` for every selected object before filtering, aggregating, or writing. Its response is authoritative for query field IDs, valid operators, enum values, relationships, and write metadata.
+4. For audits or verification, use search only to select primary and related objects, then enumerate the complete live schema for each selected object with `object_get_fields_schema`.
+5. Do not read `~/.clearskies/data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal task execution. They are legacy setup artifacts, not a substitute for live schema discovery.
 
 ## Choose tools
 
-- Use `object_definitions_list` to discover configured CRM object types.
+- Use `schema_search` for bounded, cross-object field discovery when exposed. Search is for routing, not exhaustive audit coverage.
+- Use `object_definitions_list` when `schema_search` is unavailable or when a complete list of configured CRM object types is needed.
 - Use `object_get_fields_schema` before filtering an unfamiliar object or field. Pass its query-facing `fieldId` and only operators returned in `validFilters`.
 - Use `accounts_list`, `contacts_list`, `deals_list`, and `employees_list` for the standard objects.
 - Use `account_get_contacts` and `account_get_deals` after identifying an account.
-- Use `crm_records_list` only for custom object types returned by `object_definitions_list`.
+- Use `crm_records_list` only for custom object types returned by live schema discovery.
 - Use `records_aggregate` for counts, sums, averages, minimums, maximums, and grouped totals. Never list pages of records merely to count them.
-- Treat CRM objects and activity data as separate discovery surfaces. `event` may not appear in `object_definitions_list`; call `object_get_fields_schema` with `objectType: "event"` before using unfamiliar event field filters.
+- `schema_search` can surface activity objects such as `event` even when `object_definitions_list` omits them. Call `object_get_fields_schema` with the selected activity `objectType` before using unfamiliar filters.
 - Use `events_list` for chronological activity or exact filters. Use `events_search` for semantic topic search; entity filters are optional.
 - Use `events_get_contents` only after selecting specific event IDs whose transcript, email body, or other content is needed.
 - Use `calendar_get_upcoming` only for future calendar windows.

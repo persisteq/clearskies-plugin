@@ -4,11 +4,11 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 
 ## Discovery
 
-- Discover configured object types with `object_definitions_list` instead of assuming Salesforce, HubSpot, or a standard schema.
-- Compare `schemaStatus.fingerprint` from `object_definitions_list` with the full cached `schemaFingerprint` before trusting the saved data profile. Treat a mismatch as stale schema. Do not use `lastCheckedAt` for this comparison; it is a refresh timestamp, not a content version.
+- When exposed, use `schema_search` first to find likely objects and fields across standard, custom, and activity schemas. Keep pagination cursors with the same query and filters, disclose warnings, and never treat bounded search results as exhaustive.
+- Use `object_definitions_list` when `schema_search` is unavailable or when a complete configured CRM object list is needed. Do not assume Salesforce, HubSpot, or a standard schema.
 - Inspect `object_get_fields_schema` before filtering. Use its query-facing `fieldId` and only the operators listed in each field's `validFilters`.
 - Treat `account`, `contact`, `deal`, and `employee` as standard objects with dedicated list tools. Query other returned object types with `crm_records_list`.
-- Treat `~/.clearskies/data-profile.md` as a small routing index. Open only the linked object profile files relevant to the question; never read all object profiles or the full `schema-snapshot.json` by default. If a selected profile cannot be read, disclose the fallback and call `object_get_fields_schema` for that object instead of silently skipping discovery or broadly grepping cached files. Query the MCP for current values.
+- Do not load `~/.clearskies/data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal tasks. Use live schema tools instead.
 - Use `identity_get` when exposed and the signed-in user matters. Prefer server-side `ownedByMe` scoping over manually resolving an owner ID.
 
 ## Search and pagination
@@ -29,7 +29,7 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 
 ## Meetings, calls, and email
 
-- Activity data is separate from CRM object discovery. `event` may not appear in `object_definitions_list`; this does not mean activity data is unavailable. Before applying event field filters, call `object_get_fields_schema` with `objectType: "event"`.
+- Activity data can appear in `schema_search` even when `event` is absent from `object_definitions_list`. Before applying event field filters, call `object_get_fields_schema` with `objectType: "event"`.
 - Use `events_list` for time-ordered browsing, exact entity filters, and event types. Synced types can include `meeting`, `email`, `slack_thread`, `support_ticket`, and `github_activity`.
 - Use `events_search` for semantic topic questions. Entity filters can narrow a search but are not required.
 - Use explicit RFC3339 UTC time bounds for named periods. For latest past activity, end the range at the current time.
@@ -47,7 +47,7 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 - **Synthesis across content** (themes, feedback, or objections across calls or email): run multiple query angles with different phrasings; stop at saturation, when a new angle surfaces nothing new, not at a call budget.
 - **Audit or verification**: take an adversarial stance; re-derive numbers rather than trusting prior summaries or the data profile; follow anomalies where they lead instead of completing a fixed checklist.
 
-**Audit the full relevant object profiles.** For audit or verification questions, use the `data-profile.md` index to select the primary objects and any related objects whose fields could affect eligibility, attribution, status, or aggregation, then inspect every field label and query field ID in those object files once. Do not load unrelated object profiles or limit discovery within a selected profile to keyword matches based on the initial hypotheses. Consider indirect eligibility, suppression, lifecycle, status, and quality signals before selecting checks. Call `object_get_fields_schema` only when the cached context is missing or stale, a relevant object or field is absent, full filter/enum metadata is needed, or live tool behavior conflicts with the profile.
+**Audit the full relevant object schemas.** Use `schema_search` to identify primary and related objects, then call `object_get_fields_schema` and inspect every field on each selected object once. Search ranking is not exhaustive proof that a field does or does not exist. If search is unavailable, use `object_definitions_list` to select objects and inspect their complete live schemas. Consider indirect eligibility, suppression, lifecycle, status, and quality signals before selecting checks.
 
 **Validate derived fields before aggregating them.** Before treating a stored duration, age, score, rollup, or other derived field as authoritative, check its population coverage and compare it with its source fields on raw records that include null, typical, and extreme values. If it is sparse, contradictory, or contains impossible values, compute the metric from source fields over the complete in-scope row set when feasible. Otherwise disclose the bound and do not present the result as exact. A correct row-derived answer is better than a fast aggregate of a broken field.
 

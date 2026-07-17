@@ -133,12 +133,12 @@ clearskies skills load this context only when you ask for clearskies work, so it
 unnecessary context to unrelated sessions. Setup does not change your global Claude or Codex
 instructions unless you explicitly request always-on context.
 
-The small top-level profile indexes connected CRM objects. Each object has a compact routing file
-with field labels, query field IDs, types, enum previews, and references. Full cached metadata—such
-as canonical IDs, complete enums, valid filters, editability, and sources—stays in
-`schema-snapshot.json` and is loaded only when needed. None of these files contains CRM record values
-or customer interaction content. If setup cannot complete, the previous working profile remains
-unchanged.
+When the MCP exposes `schema_search`, clearskies skills use it as the primary live discovery path,
+then call `object_get_fields_schema` for authoritative filters, enums, canonical IDs, and write
+metadata. Normal tasks do not load the saved schema profile or snapshot. Those files remain for
+backward compatibility and manual inspection, but they are not an offline execution path because
+record queries still require the live MCP. None of these files contains CRM record values or
+customer interaction content. If setup cannot complete, the previous files remain unchanged.
 
 The context metadata records both the plugin version and the opaque CRM schema fingerprint that
 generated the cached files. Clearskies skills compare them with the installed plugin and live

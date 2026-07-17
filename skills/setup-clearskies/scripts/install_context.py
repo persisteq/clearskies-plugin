@@ -356,7 +356,7 @@ def render_profile_index(
         "",
         "> Managed by the clearskies plugin. Rerun `setup clearskies` after CRM synchronization changes.",
         "> This file contains schema metadata only; it does not contain CRM values, transcripts, or email bodies.",
-        "> Keep reads small: use this index to open only the object profile(s) relevant to the question. Do not load every object profile or the full schema snapshot by default.",
+        "> Keep reads small: prefer live `schema_search`. Use this index only as fallback routing context, and open only the object profile(s) relevant to the question.",
         "",
         f"- Refreshed: `{snapshot['generatedAt']}`",
         f"- Objects: {len(snapshot['objects'])}",
@@ -379,7 +379,7 @@ def render_profile_index(
     lines.extend(
         [
             "",
-            "Object profiles contain routing fields only. Use `schema-snapshot.json` or live `object_get_fields_schema` for canonical IDs, complete enum values, filters, editability, and source details.",
+            "Object profiles are fallback routing context only. Prefer live `schema_search`, then use `object_get_fields_schema` for canonical IDs, complete enum values, filters, editability, and source details.",
             "",
         ]
     )
@@ -390,8 +390,8 @@ def render_object_profile(item: dict[str, Any], generated_at: str) -> str:
     lines = [
         f"# {_markdown(item['label'])}",
         "",
-        "> Managed by the clearskies plugin. Load this file only when this object is relevant.",
-        "> This compact profile is for field discovery and routing. Query the live schema before filtering or writing, or inspect `../schema-snapshot.json` for full cached metadata.",
+        "> Managed by the clearskies plugin. Load this fallback file only when live `schema_search` is unavailable or incomplete and this object is relevant.",
+        "> This compact profile is routing guidance only. Query `object_get_fields_schema` before filtering or writing; inspect `../schema-snapshot.json` only for targeted troubleshooting.",
         "",
         f"- Object type: `{_markdown(item['objectType'])}`",
         f"- Kind: `{item['kind']}`",
@@ -569,7 +569,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
                 BEGIN_MARKER,
                 "# clearskies context (managed by the clearskies plugin)",
                 "@~/.clearskies/default-guidelines.md",
-                "@~/.clearskies/data-profile.md",
+                "Use live `schema_search` for field discovery and `object_get_fields_schema` for authoritative field metadata. Do not load the saved schema profile during normal tasks.",
                 END_MARKER,
             ]
         )
@@ -577,7 +577,7 @@ def install(snapshot_path: Path, home: Path, install_global_loaders: bool = Fals
             [
                 BEGIN_MARKER,
                 "## clearskies context (managed by the clearskies plugin)",
-                "Before using clearskies tools, read `~/.clearskies/default-guidelines.md` and the small `~/.clearskies/data-profile.md` index, then read only the linked object profile files relevant to the task.",
+                "Before using clearskies tools, read `~/.clearskies/default-guidelines.md`, use live `schema_search` for field discovery, and use `object_get_fields_schema` for authoritative field metadata. Do not load the saved schema profile during normal tasks.",
                 END_MARKER,
             ]
         )
