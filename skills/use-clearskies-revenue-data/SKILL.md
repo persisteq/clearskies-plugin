@@ -13,7 +13,6 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 2. Use `object_definitions_list` only when the task requires a complete list of configured objects. Do not use it as a substitute for field search.
 3. Call `object_get_fields_schema` for every selected object before filtering, aggregating, or writing. Its response is authoritative for query field IDs, valid operators, enum values, relationships, and write metadata.
 4. For audits or verification, use search only to select primary and related objects, then enumerate the complete live schema for each selected object with `object_get_fields_schema`.
-5. Do not read `~/.clearskies/data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal task execution. They are legacy setup artifacts, not a substitute for live schema discovery.
 
 ## Choose tools
 

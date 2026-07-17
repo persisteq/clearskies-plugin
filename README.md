@@ -40,28 +40,7 @@ github.com/persisteq/clearskies-plugin
 Claude or ChatGPT will prompt you to connect clearskies when authentication is needed. The plugin
 does not store your credentials.
 
-### 2. Set up clearskies
-
-Start a new session and say:
-
-```text
-setup clearskies
-```
-
-Setup learns how your connected CRM is organized so future research and workflows use the right
-objects and fields. It stores schema details only—not CRM record values, transcripts, or email
-bodies.
-
-Run setup again whenever your team changes which CRM objects or fields are synchronized. Setup first
-compares the live schema fingerprint with the cached value, skips full field discovery when nothing
-changed, and replaces the previous profile only after a required refresh succeeds.
-
-If you prefer an explicit skill command, use:
-
-- Claude: `/clearskies:setup-clearskies`
-- Codex: `$setup-clearskies`
-
-### 3. Ask a revenue question
+### 2. Ask a revenue question
 
 You can ask naturally. For example:
 
@@ -78,7 +57,6 @@ You can ask naturally. For example:
 | Skill | Use it for |
 | --- | --- |
 | [`use-clearskies-revenue-data`](skills/use-clearskies-revenue-data/SKILL.md) | Account research, pipeline questions, meeting preparation and recaps, and finding evidence across CRM and customer interactions. |
-| [`setup-clearskies`](skills/setup-clearskies/SKILL.md) | Initial setup and refreshing your CRM context after sync settings change. |
 | [`clearskies-workflow-builder`](skills/clearskies-workflow-builder/SKILL.md) | Creating, changing, testing, troubleshooting, and publishing revenue workflows. |
 | [`ai-update-salesforce-field`](skills/ai-update-salesforce-field/SKILL.md) | Keeping a chosen Salesforce field up to date from relevant meeting content. |
 
@@ -116,32 +94,6 @@ run AI analysis, send Slack or email updates, and write approved changes back to
 
 Use AI to maintain a selected Salesforce field from relevant meeting content—for example, Next
 Steps, Risks, or an onboarding status field.
-
-## What setup saves
-
-Setup creates a private clearskies profile on your computer:
-
-```text
-~/.clearskies/context-metadata.json
-~/.clearskies/default-guidelines.md
-~/.clearskies/data-profile.md
-~/.clearskies/schema-snapshot.json
-```
-
-clearskies skills load this context only when you ask for clearskies work, so it does not add
-unnecessary context to unrelated sessions. Setup does not change your global Claude or Codex
-instructions unless you explicitly request always-on context.
-
-Clearskies skills use `schema_search` as the primary live discovery path, then call
-`object_get_fields_schema` for authoritative filters, enums, canonical IDs, and write metadata.
-Normal tasks do not load the saved schema profile or snapshot. Those files remain for
-backward compatibility and manual inspection, but they are not an offline execution path because
-record queries still require the live MCP. None of these files contains CRM record values or
-customer interaction content. If setup cannot complete, the previous files remain unchanged.
-
-The context metadata records both the plugin version and the opaque CRM schema fingerprint that
-generated the legacy files. The fingerprint covers query-relevant schema metadata, not CRM record
-values.
 
 ## Working safely
 

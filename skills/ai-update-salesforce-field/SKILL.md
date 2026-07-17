@@ -37,9 +37,7 @@ Search first with `schema_search` for the target field concept and record lookup
 relationship. Use the ranked matches to select candidate objects and fields, then call
 `object_get_fields_schema` for the target and lookup objects before building filters or
 writes. Disclose search warnings and never treat search as exhaustive proof. Use
-`object_definitions_list` only when a complete configured object list is required. Do not
-load `data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal
-workflow authoring. Always use
+`object_definitions_list` only when a complete configured object list is required. Always use
 `object_get_fields_schema` to verify the complete target and lookup object schemas before
 building the workflow.
 

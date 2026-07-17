@@ -28,10 +28,9 @@ When object or field discovery is needed, call `schema_search` first with the wo
 business concept. Use the ranked results only to select candidates; keep pagination
 cursors with the same query and filters, disclose warnings, and call
 `object_get_fields_schema` for each selected object before authoring filters or writes.
-Use `object_definitions_list` only when a complete configured object list is required. Do
-not load `data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal
-workflow authoring. For audits, enumerate every field on each selected and related object
-with `object_get_fields_schema` rather than treating search results as exhaustive.
+Use `object_definitions_list` only when a complete configured object list is required. For
+audits, enumerate every field on each selected and related object with
+`object_get_fields_schema` rather than treating search results as exhaustive.
 
 ## The golden rule
 

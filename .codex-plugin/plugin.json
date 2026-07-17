@@ -19,7 +19,7 @@
     "capabilities": ["Interactive", "Write"],
     "websiteURL": "https://app.clearskies.cc",
     "defaultPrompt": [
-      "Set up clearskies for my connected CRM.",
+      "Find the CRM fields relevant to my question.",
       "Research this account using CRM, calls, and email.",
       "Help me build a clearskies workflow."
     ],

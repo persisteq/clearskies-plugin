@@ -8,7 +8,6 @@ clearskies provides access to synchronized CRM records and revenue interactions 
 - Use `object_definitions_list` only when a complete configured CRM object list is needed. Do not assume Salesforce, HubSpot, or a standard schema.
 - Inspect `object_get_fields_schema` before filtering. Use its query-facing `fieldId` and only the operators listed in each field's `validFilters`.
 - Treat `account`, `contact`, `deal`, and `employee` as standard objects with dedicated list tools. Query other returned object types with `crm_records_list`.
-- Do not load `~/.clearskies/data-profile.md`, per-object profiles, or `schema-snapshot.json` during normal tasks. Use live schema tools instead.
 - Use `identity_get` when exposed and the signed-in user matters. Prefer server-side `ownedByMe` scoping over manually resolving an owner ID.
 
 ## Search and pagination
