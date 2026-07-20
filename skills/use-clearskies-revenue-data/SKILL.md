@@ -7,22 +7,20 @@ description: Query and synthesize revenue context from the clearskies MCP across
 
 Use the available clearskies data without assuming which CRM, objects, fields, or history are connected.
 
-## Load context
+## Discover schema proportionally
 
-1. Call `schema_search` first with the user's business concept and a modest page size. Use its ranked results to select candidate objects and fields. Keep a cursor only with the same query and filters, disclose any warnings, and never treat bounded search results as proof that no other relevant field exists.
-2. Use `object_definitions_list` only when the task requires a complete list of configured objects. Do not use it as a substitute for field search.
-3. Call `object_get_fields_schema` for every selected object before filtering, aggregating, or writing. Its response is authoritative for query field IDs, valid operators, enum values, relationships, and write metadata.
-4. For audits or verification, use search only to select primary and related objects, then enumerate the complete live schema for each selected object with `object_get_fields_schema`.
+- When the relevant object or field is unknown, ambiguous, or cross-object, call `schema_search` with the business concept and a modest page size. Use ranked matches to select candidates, keep cursors with the same query and filters, disclose warnings, and never treat bounded results as exhaustive.
+- When the object is known but its field contract is not, call `object_get_fields_schema`. Use its query-facing `fieldId` and only its declared filters, enums, relationships, and write metadata.
+- When the object and field IDs have already been verified in the current task, skip schema discovery and query directly.
+- Use `object_definitions_list` only for a complete configured-object inventory.
+- For an audit, inspect every field on each selected primary and related object. Use `schema_search` to select those objects only when the audit scope is ambiguous.
 
 ## Choose tools
 
-- Use `schema_search` for bounded, cross-object field discovery. Search is for routing, not exhaustive audit coverage.
-- Use `object_definitions_list` only when a complete list of configured CRM object types is needed.
-- Use `object_get_fields_schema` before filtering an unfamiliar object or field. Pass its query-facing `fieldId` and only operators returned in `validFilters`.
 - Use `accounts_list`, `contacts_list`, `deals_list`, and `employees_list` for the standard objects.
 - Use `account_get_contacts` and `account_get_deals` after identifying an account.
 - Use `crm_records_list` only for custom object types returned by live schema discovery.
-- Use `records_aggregate` for counts, sums, averages, minimums, maximums, and grouped totals. Never list pages of records merely to count them.
+- Use `records_aggregate` for counts and numeric summaries. Also inspect rows when the user asks for names or examples, when anomalies or data quality matter, or during an audit. Never list pages solely to count them.
 - `schema_search` can surface activity objects such as `event` even when `object_definitions_list` omits them. Call `object_get_fields_schema` with the selected activity `objectType` before using unfamiliar filters.
 - Use `events_list` for chronological activity or exact filters. Use `events_search` for semantic topic search; entity filters are optional.
 - Use `events_get_contents` only after selecting specific event IDs whose transcript, email body, or other content is needed.
@@ -31,18 +29,15 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 - When exposed, call `identity_get` to verify the signed-in user when identity matters. Prefer `ownedByMe` over manually filtering by the returned person ID.
 - When available, `deep_research` starts a longer-running research job. Use it only when the user explicitly requests deep research, then follow its status tool until completion.
 
-## Query safely
+## Keep the high-value guardrails
 
-1. Resolve entities before requesting their activity. Keep account, contact, employee, internal UUIDs, and external CRM IDs distinct.
-2. For Salesforce or Gong identifiers, use `externalIds` rather than text search. Account text search can match names or domains.
-3. For “my accounts,” “my contacts,” “my deals,” or “my pipeline,” set `ownedByMe: true`. If it errors, relay the error and do not silently retry without the ownership scope.
-4. Prefer exact search when the user supplies an exact name, domain, or email. Retry with a partial or `contains` search when exact search returns nothing.
-5. For CRM date-field filters, prefer supported relative values such as `thisQuarter` or `{"relativeDate":"numberOfDaysAgo","value":30}`. Never pass an epoch number as a date.
-6. For event periods, apply RFC3339 UTC `startTime` and `endTime`; set `endTime` to now for “recent” or “latest” past activity so future events are excluded.
-7. Follow cursors when the answer may span more than one page. Do not claim completeness from a truncated page.
-8. Widen a date range only after the requested range returns nothing, and state that the range was widened.
-9. Fetch full event contents only for the events used in the answer.
-10. For call or transcript requests, inspect the `event` schema before the first `events_list` call when event field filters are needed. Start with explicit time bounds and `internal.type = meeting`. When the recording provider is known, use the top-level `provider` filter to exclude calendar-only meetings. A provider-linked call does not guarantee a transcript: select relevant event IDs, call `events_get_contents`, and verify transcript content before using it. Do not begin with a broad, unfiltered calendar page.
+- Resolve an account, contact, or employee before requesting its activity. Before attributing a quote or finding, batch-resolve every cited account, contact, and employee ID with the corresponding list tool. Keep Clearskies UUIDs, people IDs, and external CRM IDs distinct.
+- Use `externalIds` for Salesforce or Gong identifiers. Prefer exact names, domains, or emails before partial matching.
+- For “my” records or pipeline, set `ownedByMe: true`. If it errors, report the error; never silently remove ownership scope.
+- Follow cursors when completeness matters. Do not claim completeness from a truncated page.
+- Use supported relative CRM dates or RFC3339/date-only fixed values; never pass epoch numbers. For recent past activity, set explicit UTC bounds with `endTime` equal to now. Disclose any widened range.
+- For calls or transcripts, start with bounded meeting filters and use the provider filter when known. A provider-linked event does not prove transcript availability: select event IDs, call `events_get_contents`, and verify transcript content before citing it. Fetch full contents only for events used in the answer.
+- Before materially relying on a stored duration, age, score, rollup, or other derived field, check its population and compare it with source fields. If it is unreliable, calculate from the sources when feasible; otherwise report the supported range or limitation instead of false precision.
 
 ## Synthesize evidence
 
