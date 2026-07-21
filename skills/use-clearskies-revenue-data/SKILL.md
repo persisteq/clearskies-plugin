@@ -1,6 +1,6 @@
 ---
 name: use-clearskies-revenue-data
-description: Query and synthesize revenue context from the clearskies MCP across connected CRM objects, accounts, contacts, deals, employees, meetings, call transcripts, and email. Use whenever a user asks to research an account or person, inspect pipeline or CRM data, prepare for or recap a meeting, find call or email evidence, or answer a revenue question from clearskies outside the workflow builder.
+description: Query and synthesize revenue context from the clearskies MCP across connected CRM objects, accounts, contacts, deals, employees, meetings, call transcripts, email, Slack, and Microsoft Teams. Use whenever a user asks to research an account or person, inspect pipeline or CRM data, prepare for or recap a meeting, find communication evidence, or answer a revenue question from clearskies outside the workflow builder.
 ---
 
 # Use clearskies revenue data
@@ -23,6 +23,7 @@ Use the available clearskies data without assuming which CRM, objects, fields, o
 - Use `records_aggregate` for counts and numeric summaries. Also inspect rows when the user asks for names or examples, when anomalies or data quality matter, or during an audit. Never list pages solely to count them.
 - `schema_search` can surface activity objects such as `event` even when `object_definitions_list` omits them. Call `object_get_fields_schema` with the selected activity `objectType` before using unfamiliar filters.
 - Use `events_list` for chronological activity or exact filters. Use `events_search` for semantic topic search; entity filters are optional.
+- For Microsoft Teams messages, do not start with account-filtered event queries. Read [references/ms-teams-messages.md](references/ms-teams-messages.md) and follow its channel-based lookup path.
 - Use `events_get_contents` only after selecting specific event IDs whose transcript, email body, or other content is needed.
 - Use `calendar_get_upcoming` only for future calendar windows.
 - When exposed, use `support_tickets_list` and `github_activities_list` for their dedicated activity types.

@@ -1,6 +1,6 @@
 interface:
   display_name: "Use clearskies Revenue Data"
-  short_description: "Query CRM, calls, and email data safely"
+  short_description: "Query CRM and communication data safely"
   default_prompt: "Use $use-clearskies-revenue-data to answer this revenue question from clearskies data."
 
 dependencies:
